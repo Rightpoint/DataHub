@@ -1,0 +1,31 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.neenbedankt.android-apt'
+
+android {
+    compileSdkVersion 22
+    buildToolsVersion "22.0.1"
+
+    defaultConfig {
+        applicationId "com.raizlabs.datacontroller"
+        minSdkVersion 15
+        targetSdkVersion 22
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:recyclerview-v7:22.1.1'
+    compile project(':DataController')
+    apt 'com.raizlabs.android:DBFlow-Compiler:2.0.0'
+    compile 'com.raizlabs.android:DBFlow-Core:2.0.0'
+    compile 'com.raizlabs.android:DBFlow:2.0.0'
+    compile 'com.mcxiaoke.volley:library:1.0.16'
+}
