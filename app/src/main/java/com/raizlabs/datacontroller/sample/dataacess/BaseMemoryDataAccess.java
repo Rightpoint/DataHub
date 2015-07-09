@@ -1,6 +1,6 @@
 package com.raizlabs.datacontroller.sample.dataacess;
 
-import com.raizlabs.datacontroller.access.MemoryDataAccess;
+import com.raizlabs.datacontroller.access.m.MemoryDataAccess;
 
 public class BaseMemoryDataAccess<Data> implements MemoryDataAccess<String, Data> {
 

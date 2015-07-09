@@ -5,8 +5,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.raizlabs.datacontroller.ErrorInfo;
-import com.raizlabs.datacontroller.access.BaseWebDataAccess;
-import com.raizlabs.datacontroller.access.WebDataAccessListener;
+import com.raizlabs.datacontroller.access.m.BaseWebDataAccess;
+import com.raizlabs.datacontroller.access.m.WebDataAccessListener;
 import com.raizlabs.datacontroller.sample.data.JsonParser;
 
 import org.json.JSONArray;

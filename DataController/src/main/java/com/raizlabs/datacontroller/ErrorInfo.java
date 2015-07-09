@@ -1,24 +1,29 @@
 package com.raizlabs.datacontroller;
 
-public class ErrorInfo extends ResultInfo{
-    private final String errorTitle;
-    private final String errorDescription;
+public class ErrorInfo {
 
-    public ErrorInfo(String errorTitle, String errorDescription, int dataSourceType, boolean isFreshDataIncoming) {
-        this(errorTitle, errorDescription, dataSourceType, isFreshDataIncoming, 0, 0);
+    public static final int ACCESS_TYPE_NONE = -1;
+
+    private final DCError error;
+    private final int dataAccessType;
+    private final boolean isUpdatePending;
+
+    public ErrorInfo(DCError error, int dataAccessType, boolean isUpdatePending) {
+        this.error = error;
+
+        this.dataAccessType = dataAccessType;
+        this.isUpdatePending = isUpdatePending;
     }
 
-    public ErrorInfo(String errorTitle, String errorDescription, int dataSourceType, boolean isFreshDataIncoming, long lastUpdatedTimestamp, long dataLifeSpan) {
-        super(null, dataSourceType, isFreshDataIncoming, lastUpdatedTimestamp, dataLifeSpan);
-        this.errorTitle = errorTitle;
-        this.errorDescription = errorDescription;
+    public DCError getError() {
+        return error;
     }
 
-    public String getErrorTitle() {
-        return errorTitle;
+    public int getDataAccessType() {
+        return dataAccessType;
     }
 
-    public String getErrorDescription() {
-        return errorDescription;
+    public boolean isUpdatePending() {
+        return isUpdatePending;
     }
 }

@@ -20,7 +20,6 @@ import com.raizlabs.datacontroller.DataSource;
 import com.raizlabs.datacontroller.DataSourceListener;
 import com.raizlabs.datacontroller.ErrorInfo;
 import com.raizlabs.datacontroller.ResultInfo;
-import com.raizlabs.datacontroller.controller.DataController;
 import com.raizlabs.datacontroller.sample.data.RecyclerAdapter;
 import com.raizlabs.datacontroller.sample.data.school.School;
 import com.raizlabs.datacontroller.sample.data.school.SchoolAdapter;
@@ -50,7 +49,7 @@ public class MainActivity extends Activity {
 
     private final DataSourceListener<List<School>> listener = new DataSourceListener<List<School>>() {
         @Override
-        public void onDataFetching() {
+        public void onDataFetchStarted() {
             setProgressBarIndeterminateVisibility(true);
         }
 
@@ -58,11 +57,11 @@ public class MainActivity extends Activity {
         public void onDataReceived(ResultInfo<List<School>> resultInfo) {
             updateExpiryInfo(resultInfo);
 
-            if(!resultInfo.isFreshDataIncoming()) {
+            if(!resultInfo.isUpdatePending()) {
                 setProgressBarIndeterminateVisibility(false);
             }
 
-            Toast.makeText(getApplicationContext(), "onDataReceived\nSource: " + (resultInfo.getDataSourceType() == ResultInfo.MEMORY_DATA ? "MEMORY" : resultInfo.getDataSourceType() == ResultInfo.DISK_DATA ? "DISK" : "WEB") + "\nIncoming? " + resultInfo.isFreshDataIncoming(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "onDataReceived\nSource: " + (resultInfo.getDataSourceId() == ResultInfo.MEMORY_DATA ? "MEMORY" : resultInfo.getDataSourceId() == ResultInfo.DISK_DATA ? "DISK" : "WEB") + "\nIncoming? " + resultInfo.isUpdatePending(), Toast.LENGTH_LONG).show();
 
             List<School> list = resultInfo.getData();
             if(list == null || list.isEmpty()) {
@@ -78,10 +77,10 @@ public class MainActivity extends Activity {
         public void onErrorReceived(ErrorInfo errorInfo) {
             updateExpiryInfo(errorInfo);
 
-            if(!errorInfo.isFreshDataIncoming()) {
+            if(!errorInfo.isUpdatePending()) {
                 setProgressBarIndeterminateVisibility(false);
             }
-            Toast.makeText(getApplicationContext(), "onErrorReceived\nSource: " + (errorInfo.getDataSourceType() == ResultInfo.MEMORY_DATA ? "MEMORY" : errorInfo.getDataSourceType() == ResultInfo.DISK_DATA ? "DISK" : "WEB") + " \nIncoming? " + errorInfo.isFreshDataIncoming() + "\nReason: " + errorInfo.getErrorTitle().toUpperCase(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "onErrorReceived\nSource: " + (errorInfo.getDataSourceType() == ResultInfo.MEMORY_DATA ? "MEMORY" : errorInfo.getDataSourceType() == ResultInfo.DISK_DATA ? "DISK" : "WEB") + " \nIncoming? " + errorInfo.isUpdatePending() + "\nReason: " + errorInfo.getErrorMessage().toUpperCase(), Toast.LENGTH_LONG).show();
         }
     };
 
@@ -126,7 +125,7 @@ public class MainActivity extends Activity {
         buttonRefresh.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                source.fetch(listener, DataController.FetchType.NORMAL_ACCESS);
+                source.fetch(listener, MDataController.FetchType.NORMAL_ACCESS);
             }
         });
 
@@ -134,7 +133,7 @@ public class MainActivity extends Activity {
         buttonForceUpdate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                source.fetch(listener, DataController.FetchType.FRESH_ONLY);
+                source.fetch(listener, MDataController.FetchType.FRESH_ONLY);
             }
         });
 
@@ -160,7 +159,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         Log.d("MERV", "onResume");
-        source.fetch(listener, DataController.FetchType.CACHE_ONLY);
+        source.fetch(listener, MDataController.FetchType.CACHE_ONLY);
     }
 
     @Override

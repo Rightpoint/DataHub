@@ -1,41 +1,26 @@
 package com.raizlabs.datacontroller;
 
 public class ResultInfo<Data> {
-    public static final int MEMORY_DATA = 1;
-    public static final int DISK_DATA = 2;
-    public static final int WEB_DATA = 4;
 
     private final Data data;
-    private final int dataSourceType;
-    private final boolean isFreshDataIncoming;
-    private final long lastUpdatedTimestamp;
-    private final long dataLifeSpan;
+    private final int dataSourceId;
+    private final boolean isUpdatePending;
 
-    public ResultInfo(Data data, int dataSourceType, boolean isFreshDataIncoming, long lastUpdatedTimestamp, long dataLifeSpan) {
+    public ResultInfo(Data data, int dataSourceId, boolean isUpdatePending) {
         this.data = data;
-        this.dataSourceType = dataSourceType;
-        this.isFreshDataIncoming = isFreshDataIncoming;
-        this.lastUpdatedTimestamp = lastUpdatedTimestamp;
-        this.dataLifeSpan = dataLifeSpan;
+        this.dataSourceId = dataSourceId;
+        this.isUpdatePending = isUpdatePending;
     }
 
     public Data getData() {
         return data;
     }
 
-    public int getDataSourceType() {
-        return dataSourceType;
+    public int getDataSourceId() {
+        return dataSourceId;
     }
 
-    public boolean isFreshDataIncoming() {
-        return isFreshDataIncoming;
-    }
-
-    public long getLastUpdatedTimestamp() {
-        return lastUpdatedTimestamp;
-    }
-
-    public long getDataLifeSpan(){
-        return dataLifeSpan;
+    public boolean isUpdatePending() {
+        return isUpdatePending;
     }
 }

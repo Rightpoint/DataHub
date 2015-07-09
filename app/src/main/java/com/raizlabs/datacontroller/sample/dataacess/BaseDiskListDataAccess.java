@@ -7,8 +7,8 @@ import com.raizlabs.android.dbflow.runtime.transaction.process.ProcessModelInfo;
 import com.raizlabs.android.dbflow.runtime.transaction.process.SaveModelTransaction;
 import com.raizlabs.android.dbflow.sql.language.Select;
 import com.raizlabs.android.dbflow.structure.Model;
-import com.raizlabs.datacontroller.access.DiskDataAccess;
-import com.raizlabs.datacontroller.access.DiskDataAccessListener;
+import com.raizlabs.datacontroller.access.m.DiskDataAccess;
+import com.raizlabs.datacontroller.access.m.DiskDataAccessListener;
 
 import java.util.List;
 

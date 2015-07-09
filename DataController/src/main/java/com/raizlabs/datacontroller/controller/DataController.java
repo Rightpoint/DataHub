@@ -1,239 +1,203 @@
 package com.raizlabs.datacontroller.controller;
 
-import android.util.Log;
+import android.os.Handler;
 
+import com.raizlabs.datacontroller.DCError;
 import com.raizlabs.datacontroller.ErrorInfo;
 import com.raizlabs.datacontroller.ResultInfo;
-import com.raizlabs.datacontroller.access.DiskDataAccess;
-import com.raizlabs.datacontroller.access.DiskDataAccessListener;
-import com.raizlabs.datacontroller.access.MemoryDataAccess;
-import com.raizlabs.datacontroller.access.WebDataAccess;
-import com.raizlabs.datacontroller.access.WebDataAccessListener;
+import com.raizlabs.datacontroller.imported.coreutils.Delegate;
+import com.raizlabs.datacontroller.imported.coreutils.MappableSet;
+import com.raizlabs.datacontroller.util.ThreadingUtils;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+public abstract class DataController<Data> {
 
-/**
- * Class that manages the data fetch based on quick access strategy. It handles all the async calls for fresh data and
- * at the same time stores the returned data to local cache for quick fetch in future.
- *
- * @param <Data> The type of data being accessed.
- */
-public abstract class DataController<Key, Data> {
-
-    public enum FetchType {
-        /**
-         * Data will be fetched from memory cache or disk cache, if available, and a fresh data will be requested if the
-         * cached data has expired or is unavailable.
-         */
-        NORMAL_ACCESS,
-
-        /**
-         * This guarantees a fresh data from the web even if the data is not expired in cache. While fetching for the
-         * fresh data this will still immediately return the cached data, if available.
-         */
-        FRESH_ONLY,
-
-        /**
-         * Only cached data (either from memory or disk) should be fetched and no requests will be placed for fresh data from web source.<br/>
-         * Note: This can return <code>null</code> if the cache is empty.
-         */
-        /**
-         * Only cached data (either from memory or disk) should be fetched and requests will be placed for fresh data
-         * from web source only if data is unavailable.<br/> Note: This can return <code>null</code> if the cache is
-         * empty.
-         */
-        CACHE_ONLY
+    public static class DataSourceIds {
+        public static final int MEMORY_DATA = 1000;
+        public static final int DISK_DATA = 2000;
+        public static final int WEB_DATA = 4000;
     }
 
-    private MemoryDataAccess<Key, Data> memoryDataAccess;
+    private static final DCError ERROR_CLOSED =
+            new DCError("Could not access data because the DataController is closed", DCError.INVALID_STATE);
 
-    private DiskDataAccess<Key, Data> diskDataAccess;
+    //region Members
+    private MappableSet<DataControllerListener<Data>> listeners = new MappableSet<>();
+    private boolean isClosed;
 
-    private WebDataAccess<Data> webDataAccess;
+    private Handler resultHandler;
 
-    private Set<DataControllerListener<Data>> listeners = new HashSet<>();
-
-    private long dataLifeSpan, lastUpdatedTimestamp;
-
-    private FetchType fetchType = FetchType.NORMAL_ACCESS;
-
-    private boolean isFetching = false;
-
-    private WebDataAccessListener<Data> webDataAccessListener = new WebDataAccessListener<Data>() {
-        @Override
-        public void onDataReceived(Data data) {
-            DataController.this.lastUpdatedTimestamp = System.currentTimeMillis();
-            notifyDataReceived(new ResultInfo<>(data, ResultInfo.WEB_DATA, false, DataController.this.lastUpdatedTimestamp, getDataLifeSpan()));
-            //Update the memory & disk caches.
-            memoryDataAccess.setData(getKey(), data);
-            diskDataAccess.setData(getKey(), data, System.currentTimeMillis());
+    public boolean isClosed() {
+        synchronized (getDataLock()) {
+            return isClosed;
         }
+    }
+    //endregion Members
 
-        @Override
-        public void onErrorReceived(ErrorInfo error) {
-            notifyErrorResponse(error);
-        }
-    };
+    //region Abstract Methods
+    protected abstract ResultInfo<Data> doGet();
 
-    private DiskDataAccessListener<Data> diskDataAccessListener = new DiskDataAccessListener<Data>() {
-        @Override
-        public void onDataReceived(Data data, long lastUpdatedTimestamp) {
-            if(data == null) {
-                notifyErrorResponse(new ErrorInfo("Data not found", "", ResultInfo.DISK_DATA, true, lastUpdatedTimestamp, getDataLifeSpan()));
-                webDataAccess.getData(webDataAccessListener);
+    protected abstract void doFetch();
+
+    protected abstract void doImportData(Data data);
+
+    protected abstract void doClose();
+
+    protected abstract boolean isFetching();
+    //endregion Abstract Methods
+
+
+    // TODO Should this be `? extends Data` ? More flexible but makes interfaces more complicated
+
+    //region Methods
+    public ResultInfo<Data> get() {
+        synchronized (getDataLock()) {
+            if (isClosed()) {
+                processClosedError();
+                return null;
             } else {
-                DataController.this.lastUpdatedTimestamp = lastUpdatedTimestamp;
-                memoryDataAccess.setData(getKey(), data);
-                if(fetchType != FetchType.CACHE_ONLY && (fetchType == FetchType.FRESH_ONLY || hasDataExpired())) {
-                    notifyDataReceived(new ResultInfo<>(data, ResultInfo.DISK_DATA, true, lastUpdatedTimestamp, getDataLifeSpan()));
-                    webDataAccess.getData(webDataAccessListener);
-                } else {
-                    notifyDataReceived(new ResultInfo<>(data, ResultInfo.DISK_DATA, false, lastUpdatedTimestamp, getDataLifeSpan()));
-                }
+                return doGet();
             }
         }
-
-        @Override
-        public void onErrorReceived(ErrorInfo errorInfo) {
-            notifyErrorResponse(new ErrorInfo(errorInfo.getErrorTitle(), errorInfo.getErrorDescription(), ResultInfo.DISK_DATA, true, lastUpdatedTimestamp, getDataLifeSpan()));
-            webDataAccess.getData(webDataAccessListener);
-        }
-    };
-
-    /**
-     * Constructs a new controller around the given data access.
-     *
-     * @param dataLifeSpan   This data's life span.
-     * @param timeUnit       Time unit used for the life span.
-     * @param diskDataAccess A data access which can be used for quick access to local data.
-     * @param webDataAccess  A slower data access which is used to access the most up-to-date remote data.
-     */
-    public DataController(long dataLifeSpan, TimeUnit timeUnit, MemoryDataAccess<Key, Data> memoryDataAccess, DiskDataAccess<Key, Data> diskDataAccess, WebDataAccess<Data> webDataAccess) {
-        this.dataLifeSpan = TimeUnit.MILLISECONDS.convert(dataLifeSpan, timeUnit);
-        this.memoryDataAccess = memoryDataAccess;
-        this.diskDataAccess = diskDataAccess;
-        this.webDataAccess = webDataAccess;
     }
 
-    protected abstract Key getKey();
+    public void fetch() {
+        synchronized (getDataLock()) {
+            if (isClosed()) {
+                processClosedError();
+            } else if (!isFetching()) {
+                onFetchStarted();
+                doFetch();
+            }
+        }
+    }
 
-    private long getDataLifeSpan() {
-        return dataLifeSpan;
+    public void importData(Data data) {
+        synchronized (getDataLock()) {
+            doImportData(data);
+        }
+    }
+
+    public void close() {
+        synchronized (getDataLock()) {
+            this.isClosed = true;
+            doClose();
+        }
     }
 
     public void addListener(DataControllerListener<Data> listener) {
         listeners.add(listener);
     }
 
-    public boolean removeListener(DataControllerListener<Data> listener) {
-        return listeners.remove(listener);
+    public void removeListener(DataControllerListener<Data> listener) {
+        listeners.remove(listener);
     }
 
-    /**
-     * Starts a full fetch of the data (based on FetchType) to obtain the most up-to-date data, and quickly returns the
-     * local data, if available.
-     *
-     * @param fetchType Type of fetch requested.
-     *
-     * @return The cached data we have locally.
-     */
-    public synchronized void fetch(FetchType fetchType) {
-        if(isFetching) {
-            //Return back memory cached data immediately.
-            Data data = memoryDataAccess.getData(getKey());
-            if(data == null) {
-                notifyErrorResponse(new ErrorInfo("Data not found", "", ResultInfo.MEMORY_DATA, true, lastUpdatedTimestamp, getDataLifeSpan()));
-            } else {
-                notifyDataReceived(new ResultInfo<>(data, ResultInfo.MEMORY_DATA, true, lastUpdatedTimestamp, getDataLifeSpan()));
-            }
-            //We need to avoid duplicate fetch requests when a fetch is already in progress.
-            //Please note that any fetchType request to DISK or WEB will be ignored until the current fetch in progress is complete.
-            return;
-        }
-
-        isFetching = true;
-        this.fetchType = fetchType;
-        Data data = memoryDataAccess.getData(getKey());
-        if(data == null) {
-            notifyErrorResponse(new ErrorInfo("Data not found", "", ResultInfo.MEMORY_DATA, true, lastUpdatedTimestamp, getDataLifeSpan()));
-            diskDataAccess.getData(getKey(), diskDataAccessListener);
-        } else {
-            if(fetchType != FetchType.CACHE_ONLY && (fetchType == FetchType.FRESH_ONLY || hasDataExpired())) {
-                notifyDataReceived(new ResultInfo<>(data, ResultInfo.MEMORY_DATA, true, lastUpdatedTimestamp, getDataLifeSpan()));
-                webDataAccess.getData(webDataAccessListener);
-            } else {
-                notifyDataReceived(new ResultInfo<>(data, ResultInfo.MEMORY_DATA, false, lastUpdatedTimestamp, getDataLifeSpan()));
-            }
+    public void setResultHandler(Handler handler) {
+        synchronized (getDataLock()) {
+            this.resultHandler = handler;
         }
     }
 
-    /**
-     * Indicates that we are done with this controller and its resources should be released.
-     */
-    public synchronized void close() {
-        isFetching = false;
-        diskDataAccess.close();
-        webDataAccess.close();
-        listeners.clear();
+    protected Object getDataLock() {
+        return this;
     }
 
-    private boolean hasDataExpired() {
-        return (System.currentTimeMillis() - lastUpdatedTimestamp > dataLifeSpan);
-    }
-
-    /*
-    private DiskDataAccessListener<Data> diskDataAccessListener = new DiskDataAccessListener<Data>() {
-        @Override
-        public void onDataReceived(Data data, long lastUpdatedTimestamp) {
-            if (fetchType != FetchType.CACHE_ONLY && data == null) {
-                notifyErrorResponse(new ErrorInfo("Data not found", "", ResultInfo.DISK_DATA, true, lastUpdatedTimestamp));
-                webDataAccess.getData(webDataAccessListener);
-            } else {
-                DataController.this.lastUpdatedTimestamp = lastUpdatedTimestamp;
-                memoryDataAccess.setData(getKey(), data);
-                if (fetchType != FetchType.CACHE_ONLY && (fetchType == FetchType.FRESH_ONLY || hasDataExpired())) {
-                    notifyDataReceived(new ResultInfo<>(data, ResultInfo.DISK_DATA, true, lastUpdatedTimestamp));
-                    webDataAccess.getData(webDataAccessListener);
-                } else {
-                    notifyDataReceived(new ResultInfo<>(data, ResultInfo.DISK_DATA, false, lastUpdatedTimestamp));
+    protected void onFetchStarted() {
+        synchronized (getDataLock()) {
+            dispatchResult(new Runnable() {
+                @Override
+                public void run() {
+                    listeners.map(new Delegate<DataControllerListener<Data>>() {
+                        @Override
+                        public void execute(DataControllerListener<Data> listener) {
+                            listener.onDataFetchStarted();
+                        }
+                    });
                 }
-            }
-        }
-
-        @Override
-        public void onErrorReceived(ErrorInfo errorInfo) {
-            notifyErrorResponse(new ErrorInfo(errorInfo.getErrorTitle(), errorInfo.getErrorDescription(), ResultInfo.DISK_DATA, (fetchType != FetchType.CACHE_ONLY), lastUpdatedTimestamp));
-            if (fetchType != FetchType.CACHE_ONLY) {
-                webDataAccess.getData(webDataAccessListener);
-            }
-        }
-    };*/
-
-    private void notifyDataReceived(ResultInfo<Data> resultInfo) {
-        if(!resultInfo.isFreshDataIncoming()) {
-            isFetching = false;
-        }
-        synchronized(this) {
-            Log.d("MERV", "notifyDataReceived[" + (resultInfo.getDataSourceType() == ResultInfo.MEMORY_DATA ? "MEMORY" : resultInfo.getDataSourceType() == ResultInfo.DISK_DATA ? "DISK" : "WEB") + "]: listeners(" + listeners.size() + ") Incoming?" + resultInfo.isFreshDataIncoming());
-            // Notify the data listeners
-            for(DataControllerListener<Data> listener : listeners) {
-                listener.onDataReceived(resultInfo);
-            }
+            });
         }
     }
 
-    private void notifyErrorResponse(ErrorInfo errorInfo) {
-        if(!errorInfo.isFreshDataIncoming()) {
-            isFetching = false;
-        }
-        synchronized(this) {
-            Log.d("MERV", "notifyErrorResponse[" + (errorInfo.getDataSourceType() == ResultInfo.MEMORY_DATA ? "MEMORY" : errorInfo.getDataSourceType() == ResultInfo.DISK_DATA ? "DISK" : "WEB") + "]: listeners(" + listeners.size() + ") Incoming?" + errorInfo.isFreshDataIncoming());
-            // Notify the data listeners
-            for(DataControllerListener<Data> listener : listeners) {
-                listener.onErrorReceived(errorInfo);
-            }
+    protected void onFetchFinished() {
+        synchronized (getDataLock()) {
+            dispatchResult(new Runnable() {
+                @Override
+                public void run() {
+                    listeners.map(new Delegate<DataControllerListener<Data>>() {
+                        @Override
+                        public void execute(DataControllerListener<Data> listener) {
+                            listener.onDataFetchFinished();
+                        }
+                    });
+                }
+            });
         }
     }
+
+    protected void processDataFetched(final ResultInfo<Data> resultInfo) {
+        synchronized (getDataLock()) {
+            dispatchResult(new Runnable() {
+                @Override
+                public void run() {
+                    onDataFetched(resultInfo);
+
+                    listeners.map(new Delegate<DataControllerListener<Data>>() {
+                        @Override
+                        public void execute(DataControllerListener<Data> listener) {
+                            listener.onDataReceived(resultInfo);
+                        }
+                    });
+
+                    if (!resultInfo.isUpdatePending()) {
+                        onFetchFinished();
+                    }
+                }
+            });
+        }
+    }
+
+    protected void processError(final ErrorInfo errorInfo) {
+        synchronized (getDataLock()) {
+            dispatchResult(new Runnable() {
+                @Override
+                public void run() {
+                    onError(errorInfo);
+
+                    listeners.map(new Delegate<DataControllerListener<Data>>() {
+                        @Override
+                        public void execute(DataControllerListener<Data> listener) {
+                            listener.onErrorReceived(errorInfo);
+                        }
+                    });
+
+                    if (!errorInfo.isUpdatePending()) {
+                        onFetchFinished();
+                    }
+                }
+            });
+        }
+    }
+
+    private void processClosedError() {
+        processError(new ErrorInfo(ERROR_CLOSED, ErrorInfo.ACCESS_TYPE_NONE, isFetching()));
+    }
+
+    private void dispatchResult(Runnable runnable) {
+        if (resultHandler != null) {
+            ThreadingUtils.runOnHandler(resultHandler, runnable);
+        } else {
+            runnable.run();
+        }
+    }
+    //endregion Methods
+
+    //region Overridable Events
+    protected void onDataFetched(ResultInfo<Data> resultInfo) {
+
+    }
+
+    protected void onError(ErrorInfo errorInfo) {
+
+    }
+    //endregion Overridable Events
 }

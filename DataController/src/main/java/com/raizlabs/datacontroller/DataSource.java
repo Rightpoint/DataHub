@@ -8,58 +8,47 @@ import com.raizlabs.datacontroller.util.ThreadingUtils;
 
 public class DataSource<Data> {
 
-    private DataController<?, Data> dataController;
+    private DataController<Data> dataController;
 
     private DataSourceListener<Data> listener;
 
     private Handler handler;
 
-    DataControllerListener<Data> dataControllerListener = new DataControllerListener<Data>() {
-        @Override
-        public void onDataReceived(ResultInfo<Data> resultInfo) {
-            loadData(resultInfo);
-        }
-
-        @Override
-        public void onErrorReceived(ErrorInfo errorInfo) {
-            showError(errorInfo);
-        }
-    };
-
     /**
-     * Constructs a {@link DataSource} which accesses data from the given controller and passes UI operations to the
-     * given delegate. By default, all the callbacks will be directed to UI handler.
+     * Constructs a {@link DataSource} which accesses data from the given controller. All callbacks will be dispatched
+     * on the UI thread.
      *
      * @param dataController The controller to access data from.
      */
-    public DataSource(DataController<?, Data> dataController) {
+    public DataSource(DataController<Data> dataController) {
         this(dataController, ThreadingUtils.getUIHandler());
     }
 
     /**
-     * Constructs a {@link DataSource} which accesses data from the given controller and passes UI operations to the
-     * given delegate. Set a custom handler that already has an associated {@link android.os.Looper}..
+     * Constructs a {@link DataSource} which accesses data from the given controller and dispatches all callbacks via
+     * the given {@link Handler}.
      *
      * @param dataController The controller to access data from.
-     * @param handler        The handler to handle future callbacks from.
+     * @param handler        The handler to dispatch future callbacks to, or null to dispatch them straight from the
+     *                       threads the {@link com.raizlabs.datacontroller.controller.DataController} is calling from.
      */
-    public DataSource(DataController<?, Data> dataController, Handler handler) {
+    public DataSource(DataController<Data> dataController, Handler handler) {
         this.dataController = dataController;
         this.handler = handler;
     }
 
-    /**
-     * Places a request for data fetch (based on FetchType) and registers the listener to receive fetch results. This
-     * does not guarantee a refetch if one is already underway.
-     *
-     * @param listener  The listener to pass UI operations to.
-     * @param fetchType Type of fetch requested.
-     */
-    public void fetch(DataSourceListener<Data> listener, DataController.FetchType fetchType) {
-        this.listener = listener;
-        showLoading();
-        dataController.addListener(dataControllerListener);
-        dataController.fetch(fetchType);
+    public ResultInfo<Data> get() {
+        if (dataController != null) {
+            return dataController.get();
+        } else {
+            return null;
+        }
+    }
+
+    public void fetch() {
+        if (dataController != null) {
+            dataController.fetch();
+        }
     }
 
     /**
@@ -74,52 +63,96 @@ public class DataSource<Data> {
      */
     public void close(boolean completeShutdown) {
         listener = null;
-        if(completeShutdown) {
-            dataController.close();
-        } else {
+
+        if (dataController != null) {
             dataController.removeListener(dataControllerListener);
+
+            if (completeShutdown) {
+                dataController.close();
+            }
         }
     }
 
     /**
      * Called to dispatch fetching start indication via the delegate.
      */
-    private void showLoading() {
-        ThreadingUtils.runOnHandler(new Runnable() {
+    protected void onFetchStarted() {
+        dispatchResult(new Runnable() {
             @Override
             public void run() {
-                if(listener != null) {
-                    listener.onDataFetching();
+                if (listener != null) {
+                    listener.onDataFetchStarted();
                 }
             }
-        }, handler);
+        });
+    }
+
+    protected void onFetchFinished() {
+        dispatchResult(new Runnable() {
+            @Override
+            public void run() {
+                if (listener != null) {
+                    listener.onDataFetchFinished();
+                }
+            }
+        });
     }
 
     /**
      * Called to dispatch loading the data via the delegate.
      */
-    private void loadData(final ResultInfo<Data> resultInfo) {
-        ThreadingUtils.runOnHandler(new Runnable() {
+    protected void onDataLoaded(final ResultInfo<Data> resultInfo) {
+        dispatchResult(new Runnable() {
             @Override
             public void run() {
-                if(listener != null) {
+                if (listener != null) {
                     listener.onDataReceived(resultInfo);
                 }
             }
-        }, handler);
+        });
     }
 
     /**
      * Called to dispatch showing an error via the delegate.
      */
-    private void showError(final ErrorInfo errorInfo) {
-        ThreadingUtils.runOnHandler(new Runnable() {
+    protected void onError(final ErrorInfo errorInfo) {
+        dispatchResult(new Runnable() {
             @Override
             public void run() {
-                if(listener != null) {
+                if (listener != null) {
                     listener.onErrorReceived(errorInfo);
                 }
             }
-        }, handler);
+        });
     }
+
+    protected void dispatchResult(Runnable runnable) {
+        if (handler != null) {
+            ThreadingUtils.runOnHandler(handler, runnable);
+        } else {
+            runnable.run();
+        }
+    }
+
+    DataControllerListener<Data> dataControllerListener = new DataControllerListener<Data>() {
+        @Override
+        public void onDataFetchStarted() {
+            DataSource.this.onFetchStarted();
+        }
+
+        @Override
+        public void onDataFetchFinished() {
+            DataSource.this.onFetchFinished();
+        }
+
+        @Override
+        public void onDataReceived(ResultInfo<Data> resultInfo) {
+            DataSource.this.onDataLoaded(resultInfo);
+        }
+
+        @Override
+        public void onErrorReceived(ErrorInfo errorInfo) {
+            DataSource.this.onError(errorInfo);
+        }
+    };
 }
