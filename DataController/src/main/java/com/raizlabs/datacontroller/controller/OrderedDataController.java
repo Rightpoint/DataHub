@@ -1,8 +1,7 @@
 package com.raizlabs.datacontroller.controller;
 
-import com.raizlabs.datacontroller.DCError;
-import com.raizlabs.datacontroller.ErrorInfo;
-import com.raizlabs.datacontroller.ResultInfo;
+import com.raizlabs.datacontroller.DataAccessResult;
+import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.access.AsynchronousDataAccess;
 import com.raizlabs.datacontroller.access.SynchronousDataAccess;
 
@@ -11,7 +10,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class DataControllerImpl<Data> extends DataController<Data> {
+public class OrderedDataController<Data> extends DataController<Data> {
 
     private boolean shouldBackport;
 
@@ -19,11 +18,11 @@ public class DataControllerImpl<Data> extends DataController<Data> {
     private List<AsynchronousDataAccess<Data>> asyncDataAccess;
     private FetchHelper<Data> fetchHelper;
 
-    public DataControllerImpl(SynchronousDataAccess<Data> synchronous, List<AsynchronousDataAccess<Data>> asynchronous) {
+    public OrderedDataController(SynchronousDataAccess<Data> synchronous, List<AsynchronousDataAccess<Data>> asynchronous) {
         this(synchronous, asynchronous, true);
     }
 
-    public DataControllerImpl(SynchronousDataAccess<Data> synchronous, List<AsynchronousDataAccess<Data>> asynchronous, boolean backport) {
+    public OrderedDataController(SynchronousDataAccess<Data> synchronous, List<AsynchronousDataAccess<Data>> asynchronous, boolean backport) {
         this.syncDataAccess = synchronous;
 
         if (asynchronous == null) {
@@ -49,10 +48,10 @@ public class DataControllerImpl<Data> extends DataController<Data> {
     }
 
     @Override
-    public ResultInfo<Data> doGet() {
+    public ControllerResult<Data> doGet() {
         if (syncDataAccess != null) {
-            Data data = syncDataAccess.get();
-            return new ResultInfo<>(data, syncDataAccess.getSourceId(), isFetching());
+            DataAccessResult<Data> accessResult = syncDataAccess.get();
+            return new ControllerResult<>(accessResult, syncDataAccess.getSourceId(), isFetching());
         }
 
         return null;
@@ -79,6 +78,8 @@ public class DataControllerImpl<Data> extends DataController<Data> {
         for (AsynchronousDataAccess<Data> access : asyncDataAccess) {
             access.close();
         }
+
+        fetchHelper.close();
     }
 
     @Override
@@ -87,55 +88,46 @@ public class DataControllerImpl<Data> extends DataController<Data> {
     }
 
     @Override
-    protected void onDataFetched(ResultInfo<Data> resultInfo) {
-        super.onDataFetched(resultInfo);
+    protected void onDataFetched(DataResult<Data> dataResult) {
+        super.onDataFetched(dataResult);
 
-        if (shouldBackport() && shouldBackportResult(resultInfo)) {
-            Data data = resultInfo.getData();
+        if (shouldBackport() && shouldBackportResult(dataResult)) {
+            Data data = dataResult.getData();
             syncDataAccess.importData(data);
 
             for (AsynchronousDataAccess<Data> access : asyncDataAccess) {
                 access.importData(data);
                 // Stop when we hit the same source
-                if (access.getSourceId() == resultInfo.getDataSourceId()) {
+                if (access.getSourceId() == dataResult.getDataSourceId()) {
                     break;
                 }
             }
         }
     }
 
-    protected boolean shouldBackportResult(ResultInfo<Data> resultInfo) {
+    protected boolean shouldBackportResult(DataResult<Data> dataResult) {
         return true;
     }
 
-    protected void processAsyncResult(Data data, AsynchronousDataAccess<Data> access) {
+    protected void processAsyncResult(DataAccessResult<Data> data, AsynchronousDataAccess<Data> access) {
         synchronized (getDataLock()) {
             if (!isClosed()) {
-                ResultInfo<Data> result = new ResultInfo<>(data, access.getSourceId(), isFetching());
-                processDataFetched(result);
-            }
-        }
-    }
-
-    protected void processAsyncError(DCError error, AsynchronousDataAccess<Data> access) {
-        synchronized (getDataLock()) {
-            if (!isClosed()) {
-                ErrorInfo errorInfo = new ErrorInfo(error, access.getSourceId(), isFetching());
-                processError(errorInfo);
+                ControllerResult<Data> result = new ControllerResult<>(data, access.getSourceId(), isFetching());
+                processResult(result);
             }
         }
     }
 
     private static class FetchHelper<T> {
 
-        private DataControllerImpl<T> dataController;
+        private OrderedDataController<T> dataController;
 
         private List<AsynchronousDataAccess<T>> dataAccesses;
         private int lastAccessIndex;
 
         private CancelableCallback<T> previousCallback;
 
-        public FetchHelper(DataControllerImpl<T> dataController) {
+        public FetchHelper(OrderedDataController<T> dataController) {
             this.dataController = dataController;
         }
 
@@ -151,6 +143,7 @@ public class DataControllerImpl<Data> extends DataController<Data> {
             close();
 
             CancelableCallback<T> callback = new CancelableCallback<>(this);
+            previousCallback = callback;
 
             this.dataAccesses = new ArrayList<>(dataController.asyncDataAccess);
 
@@ -160,7 +153,6 @@ public class DataControllerImpl<Data> extends DataController<Data> {
                 access.get(callback);
             }
 
-            previousCallback = callback;
         }
 
         public synchronized boolean isPending() {
@@ -174,15 +166,9 @@ public class DataControllerImpl<Data> extends DataController<Data> {
             }
         }
 
-        private synchronized void processResult(T data, AsynchronousDataAccess<T> access) {
+        private synchronized void processResult(DataAccessResult<T> data, AsynchronousDataAccess<T> access) {
             if (onAccessResult(getAccessIndex(access))) {
                 dataController.processAsyncResult(data, access);
-            }
-        }
-
-        private synchronized void processError(DCError error, AsynchronousDataAccess<T> access) {
-            if (onAccessResult(getAccessIndex(access))) {
-                dataController.processAsyncError(error, access);
             }
         }
 
@@ -223,18 +209,10 @@ public class DataControllerImpl<Data> extends DataController<Data> {
             }
 
             @Override
-            public void onDataObtained(T t, AsynchronousDataAccess<T> access) {
+            public void onResult(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
                 FetchHelper<T> helper = getHelper();
                 if (helper != null) {
-                    helper.processResult(t, access);
-                }
-            }
-
-            @Override
-            public void onError(DCError error, AsynchronousDataAccess<T> access) {
-                FetchHelper<T> helper = getHelper();
-                if (helper != null) {
-                    helper.processError(error, access);
+                    helper.processResult(result, access);
                 }
             }
 

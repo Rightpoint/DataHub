@@ -3,8 +3,8 @@ package com.raizlabs.datacontroller.controller;
 import android.os.Handler;
 
 import com.raizlabs.datacontroller.DCError;
+import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.ErrorInfo;
-import com.raizlabs.datacontroller.ResultInfo;
 import com.raizlabs.datacontroller.imported.coreutils.Delegate;
 import com.raizlabs.datacontroller.imported.coreutils.MappableSet;
 import com.raizlabs.datacontroller.util.ThreadingUtils;
@@ -18,7 +18,7 @@ public abstract class DataController<Data> {
     }
 
     private static final DCError ERROR_CLOSED =
-            new DCError("Could not access data because the DataController is closed", DCError.INVALID_STATE);
+            new DCError("Could not access data because the DataController is closed", DCError.Types.INVALID_STATE);
 
     //region Members
     private MappableSet<DataControllerListener<Data>> listeners = new MappableSet<>();
@@ -34,7 +34,7 @@ public abstract class DataController<Data> {
     //endregion Members
 
     //region Abstract Methods
-    protected abstract ResultInfo<Data> doGet();
+    protected abstract ControllerResult<Data> doGet();
 
     protected abstract void doFetch();
 
@@ -49,7 +49,7 @@ public abstract class DataController<Data> {
     // TODO Should this be `? extends Data` ? More flexible but makes interfaces more complicated
 
     //region Methods
-    public ResultInfo<Data> get() {
+    public ControllerResult<Data> get() {
         synchronized (getDataLock()) {
             if (isClosed()) {
                 processClosedError();
@@ -134,21 +134,28 @@ public abstract class DataController<Data> {
         }
     }
 
-    protected void processDataFetched(final ResultInfo<Data> resultInfo) {
+    protected void processResult(final ControllerResult<Data> controllerResult) {
         synchronized (getDataLock()) {
             dispatchResult(new Runnable() {
                 @Override
                 public void run() {
-                    onDataFetched(resultInfo);
+                    if (controllerResult.hasValidData()) {
+                        final DataResult<Data> dataResult = new DataResult<>(
+                                controllerResult.getData(),
+                                controllerResult.getSourceId(),
+                                controllerResult.isFetching());
 
-                    listeners.map(new Delegate<DataControllerListener<Data>>() {
-                        @Override
-                        public void execute(DataControllerListener<Data> listener) {
-                            listener.onDataReceived(resultInfo);
-                        }
-                    });
+                        notifyDataFetched(dataResult);
+                    } else if (controllerResult.getError() != null) {
+                        final ErrorInfo errorInfo = new ErrorInfo(
+                                controllerResult.getError(),
+                                controllerResult.getSourceId(),
+                                controllerResult.isFetching());
 
-                    if (!resultInfo.isUpdatePending()) {
+                        notifyError(errorInfo);
+                    }
+
+                    if (!controllerResult.isFetching()) {
                         onFetchFinished();
                     }
                 }
@@ -156,30 +163,38 @@ public abstract class DataController<Data> {
         }
     }
 
-    protected void processError(final ErrorInfo errorInfo) {
-        synchronized (getDataLock()) {
-            dispatchResult(new Runnable() {
-                @Override
-                public void run() {
-                    onError(errorInfo);
+    private void notifyDataFetched(final DataResult<Data> dataResult) {
+        onDataFetched(dataResult);
 
-                    listeners.map(new Delegate<DataControllerListener<Data>>() {
-                        @Override
-                        public void execute(DataControllerListener<Data> listener) {
-                            listener.onErrorReceived(errorInfo);
-                        }
-                    });
-
-                    if (!errorInfo.isUpdatePending()) {
-                        onFetchFinished();
-                    }
-                }
-            });
-        }
+        listeners.map(new Delegate<DataControllerListener<Data>>() {
+            @Override
+            public void execute(DataControllerListener<Data> listener) {
+                listener.onDataReceived(dataResult);
+            }
+        });
     }
+
+    private void notifyError(final ErrorInfo errorInfo) {
+        onError(errorInfo);
+
+        listeners.map(new Delegate<DataControllerListener<Data>>() {
+            @Override
+            public void execute(DataControllerListener<Data> listener) {
+                listener.onErrorReceived(errorInfo);
+            }
+        });
+    }
+
 
     private void processClosedError() {
-        processError(new ErrorInfo(ERROR_CLOSED, ErrorInfo.ACCESS_TYPE_NONE, isFetching()));
+        synchronized (getDataLock()) {
+            dispatchResult(new Runnable() {
+                @Override
+                public void run() {
+                    notifyError(new ErrorInfo(ERROR_CLOSED, ErrorInfo.ACCESS_TYPE_NONE, isFetching()));
+                }
+            });
+        }
     }
 
     private void dispatchResult(Runnable runnable) {
@@ -192,7 +207,7 @@ public abstract class DataController<Data> {
     //endregion Methods
 
     //region Overridable Events
-    protected void onDataFetched(ResultInfo<Data> resultInfo) {
+    protected void onDataFetched(DataResult<Data> dataResult) {
 
     }
 

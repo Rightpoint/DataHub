@@ -15,6 +15,11 @@ public class CachedDataManager<K, V> extends BaseKeyedDataManager<K, V> {
         };
     }
 
+    @Override
+    public boolean containsKey(K key) {
+        return (cache.get(key) != null);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T> T get(K key) {

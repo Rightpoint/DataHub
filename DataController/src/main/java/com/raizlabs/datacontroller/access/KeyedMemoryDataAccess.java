@@ -1,28 +1,29 @@
 package com.raizlabs.datacontroller.access;
 
 
+import com.raizlabs.datacontroller.DataAccessResult;
 import com.raizlabs.datacontroller.controller.DataController;
 
-public class KeyedDataAccess<Data> implements SynchronousDataAccess<Data> {
+public class KeyedMemoryDataAccess<Data> implements SynchronousDataAccess<Data> {
 
     private final Object key;
     private final int sourceId;
     private final KeyedDataManager<?, ? super Data> dataManager;
     private final ManagerHelper<?, Data> managerHelper;
 
-    public KeyedDataAccess(Object key) {
+    public KeyedMemoryDataAccess(Object key) {
         this(key, DataController.DataSourceIds.MEMORY_DATA);
     }
 
-    public KeyedDataAccess(Object key, int sourceId) {
+    public KeyedMemoryDataAccess(Object key, int sourceId) {
         this(key, sourceId, MemoryDataManager.getGlobalInstance());
     }
 
-    public <K, M extends KeyedDataManager<K, ? super Data>> KeyedDataAccess(K key, M manager) {
+    public <K, M extends KeyedDataManager<K, ? super Data>> KeyedMemoryDataAccess(K key, M manager) {
         this(key, DataController.DataSourceIds.MEMORY_DATA, manager);
     }
 
-    public <K, M extends KeyedDataManager<K, ? super Data>> KeyedDataAccess(K key, int sourceId, M manager) {
+    public <K, M extends KeyedDataManager<K, ? super Data>> KeyedMemoryDataAccess(K key, int sourceId, M manager) {
         this.key = key;
         this.sourceId = sourceId;
         this.dataManager = manager;
@@ -38,8 +39,8 @@ public class KeyedDataAccess<Data> implements SynchronousDataAccess<Data> {
     }
 
     @Override
-    public Data get() {
-        return managerHelper.get();
+    public DataAccessResult<Data> get() {
+        return managerHelper.getResult();
     }
 
     @Override
@@ -70,7 +71,15 @@ public class KeyedDataAccess<Data> implements SynchronousDataAccess<Data> {
             this.manager = manager;
         }
 
-        public V get() {
+        public DataAccessResult<V> getResult() {
+            if (manager.containsKey(key)) {
+                return DataAccessResult.fromResult(getValue());
+            } else {
+                return DataAccessResult.fromUnavailable();
+            }
+        }
+
+        public V getValue() {
             return manager.get(key);
         }
 

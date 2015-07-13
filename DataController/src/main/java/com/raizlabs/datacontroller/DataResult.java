@@ -1,12 +1,12 @@
 package com.raizlabs.datacontroller;
 
-public class ResultInfo<Data> {
+public class DataResult<Data> {
 
     private final Data data;
     private final int dataSourceId;
     private final boolean isUpdatePending;
 
-    public ResultInfo(Data data, int dataSourceId, boolean isUpdatePending) {
+    public DataResult(Data data, int dataSourceId, boolean isUpdatePending) {
         this.data = data;
         this.dataSourceId = dataSourceId;
         this.isUpdatePending = isUpdatePending;

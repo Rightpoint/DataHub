@@ -19,6 +19,11 @@ public class MemoryDataManager<K, V> extends BaseKeyedDataManager<K, V> {
 
     }
 
+    @Override
+    public boolean containsKey(K key) {
+        return map.containsKey(key);
+    }
+
     //region Methods
     @SuppressWarnings("unchecked")
     @Override

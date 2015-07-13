@@ -1,6 +1,6 @@
 package com.raizlabs.datacontroller.sample.data.school;
 
-import com.raizlabs.datacontroller.controller.DataControllerImpl;
+import com.raizlabs.datacontroller.controller.OrderedDataController;
 import com.raizlabs.datacontroller.sample.dataacess.BaseDiskListDataAccess;
 import com.raizlabs.datacontroller.sample.dataacess.BaseMemoryDataAccess;
 import com.raizlabs.datacontroller.sample.dataacess.VolleyWebListDataAccess;
@@ -8,7 +8,7 @@ import com.raizlabs.datacontroller.sample.dataacess.VolleyWebListDataAccess;
 import java.util.Arrays;
 import java.util.List;
 
-public class SchoolDataController extends DataControllerImpl<List<School>> {
+public class SchoolDataController extends OrderedDataController<List<School>> {
 
     private static final SchoolDataController INSTANCE = new SchoolDataController();
 

@@ -1,12 +1,11 @@
 package com.raizlabs.datacontroller.access;
 
-import com.raizlabs.datacontroller.*;
+import com.raizlabs.datacontroller.DataAccessResult;
 
 public interface AsynchronousDataAccess<Data> {
 
     public interface Callback<Data> {
-        public void onDataObtained(Data data, AsynchronousDataAccess<Data> access);
-        public void onError(DCError error, AsynchronousDataAccess<Data> access);
+        public void onResult(DataAccessResult<Data> result, AsynchronousDataAccess<Data> access);
     }
 
     public void get(Callback<Data> callback);

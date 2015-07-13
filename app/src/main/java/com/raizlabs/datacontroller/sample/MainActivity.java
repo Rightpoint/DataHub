@@ -19,7 +19,7 @@ import android.widget.ViewFlipper;
 import com.raizlabs.datacontroller.DataSource;
 import com.raizlabs.datacontroller.DataSourceListener;
 import com.raizlabs.datacontroller.ErrorInfo;
-import com.raizlabs.datacontroller.ResultInfo;
+import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.sample.data.RecyclerAdapter;
 import com.raizlabs.datacontroller.sample.data.school.School;
 import com.raizlabs.datacontroller.sample.data.school.SchoolAdapter;
@@ -54,16 +54,16 @@ public class MainActivity extends Activity {
         }
 
         @Override
-        public void onDataReceived(ResultInfo<List<School>> resultInfo) {
-            updateExpiryInfo(resultInfo);
+        public void onDataReceived(DataResult<List<School>> dataResult) {
+            updateExpiryInfo(dataResult);
 
-            if(!resultInfo.isUpdatePending()) {
+            if(!dataResult.isUpdatePending()) {
                 setProgressBarIndeterminateVisibility(false);
             }
 
-            Toast.makeText(getApplicationContext(), "onDataReceived\nSource: " + (resultInfo.getDataSourceId() == ResultInfo.MEMORY_DATA ? "MEMORY" : resultInfo.getDataSourceId() == ResultInfo.DISK_DATA ? "DISK" : "WEB") + "\nIncoming? " + resultInfo.isUpdatePending(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "onDataReceived\nSource: " + (dataResult.getDataSourceId() == DataResult.MEMORY_DATA ? "MEMORY" : dataResult.getDataSourceId() == DataResult.DISK_DATA ? "DISK" : "WEB") + "\nIncoming? " + dataResult.isUpdatePending(), Toast.LENGTH_LONG).show();
 
-            List<School> list = resultInfo.getData();
+            List<School> list = dataResult.getData();
             if(list == null || list.isEmpty()) {
                 setEmptyState(true);
             } else {
@@ -80,7 +80,7 @@ public class MainActivity extends Activity {
             if(!errorInfo.isUpdatePending()) {
                 setProgressBarIndeterminateVisibility(false);
             }
-            Toast.makeText(getApplicationContext(), "onErrorReceived\nSource: " + (errorInfo.getDataSourceType() == ResultInfo.MEMORY_DATA ? "MEMORY" : errorInfo.getDataSourceType() == ResultInfo.DISK_DATA ? "DISK" : "WEB") + " \nIncoming? " + errorInfo.isUpdatePending() + "\nReason: " + errorInfo.getErrorMessage().toUpperCase(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "onErrorReceived\nSource: " + (errorInfo.getDataSourceType() == DataResult.MEMORY_DATA ? "MEMORY" : errorInfo.getDataSourceType() == DataResult.DISK_DATA ? "DISK" : "WEB") + " \nIncoming? " + errorInfo.isUpdatePending() + "\nReason: " + errorInfo.getErrorMessage().toUpperCase(), Toast.LENGTH_LONG).show();
         }
     };
 
@@ -169,7 +169,7 @@ public class MainActivity extends Activity {
         source.close(false);
     }
 
-    private void updateExpiryInfo(final ResultInfo<List<School>> resultInfo) {
+    private void updateExpiryInfo(final DataResult<List<School>> dataResult) {
         if(timer != null) {
             timer.cancel();
         }
@@ -180,7 +180,7 @@ public class MainActivity extends Activity {
                 ThreadingUtils.runOnHandler(new Runnable() {
                     @Override
                     public void run() {
-                        long expiresIn = resultInfo.getDataLifeSpan() - System.currentTimeMillis() + resultInfo.getLastUpdatedTimestamp();
+                        long expiresIn = dataResult.getDataLifeSpan() - System.currentTimeMillis() + dataResult.getLastUpdatedTimestamp();
                         if(expiresIn <= 0) {
                             textExpiryInfo.setTextColor(Color.RED);
                             textExpiryInfo.setText("Data has expired! Consider refresh.");

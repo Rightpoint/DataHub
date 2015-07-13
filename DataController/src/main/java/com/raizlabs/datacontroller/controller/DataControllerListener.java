@@ -1,7 +1,7 @@
 package com.raizlabs.datacontroller.controller;
 
 import com.raizlabs.datacontroller.ErrorInfo;
-import com.raizlabs.datacontroller.ResultInfo;
+import com.raizlabs.datacontroller.DataResult;
 
 /**
  * A listener interface which handles the results from data controller
@@ -23,9 +23,9 @@ public interface DataControllerListener<Data> {
     /**
      * Called when the data has been fetched successfully.
      *
-     * @param resultInfo The fetched data.
+     * @param dataResult The fetched data.
      */
-    public void onDataReceived(ResultInfo<Data> resultInfo);
+    public void onDataReceived(DataResult<Data> dataResult);
 
     /**
      * Called when the data fetch has failed.

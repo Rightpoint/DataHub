@@ -2,6 +2,7 @@ package com.raizlabs.datacontroller;
 
 import android.os.Handler;
 
+import com.raizlabs.datacontroller.controller.ControllerResult;
 import com.raizlabs.datacontroller.controller.DataController;
 import com.raizlabs.datacontroller.controller.DataControllerListener;
 import com.raizlabs.datacontroller.util.ThreadingUtils;
@@ -15,29 +16,31 @@ public class DataSource<Data> {
     private Handler handler;
 
     /**
-     * Constructs a {@link DataSource} which accesses data from the given controller. All callbacks will be dispatched
-     * on the UI thread.
+     * Constructs a {@link DataSource} which accesses data from the given controller. All update callbacks will be
+     * dispatched on the UI thread.
      *
      * @param dataController The controller to access data from.
+     * @param listener       The listener to call with updates.
      */
-    public DataSource(DataController<Data> dataController) {
-        this(dataController, ThreadingUtils.getUIHandler());
+    public DataSource(DataController<Data> dataController, DataSourceListener<Data> listener) {
+        this(dataController, listener, ThreadingUtils.getUIHandler());
     }
 
     /**
-     * Constructs a {@link DataSource} which accesses data from the given controller and dispatches all callbacks via
-     * the given {@link Handler}.
+     * Constructs a {@link DataSource} which accesses data from the given controller and dispatches all update callbacks
+     * via the given {@link Handler}.
      *
      * @param dataController The controller to access data from.
+     * @param listener       The listener to call with updates.
      * @param handler        The handler to dispatch future callbacks to, or null to dispatch them straight from the
      *                       threads the {@link com.raizlabs.datacontroller.controller.DataController} is calling from.
      */
-    public DataSource(DataController<Data> dataController, Handler handler) {
+    public DataSource(DataController<Data> dataController, DataSourceListener<Data> listener, Handler handler) {
         this.dataController = dataController;
         this.handler = handler;
     }
 
-    public ResultInfo<Data> get() {
+    public ControllerResult<Data> get() {
         if (dataController != null) {
             return dataController.get();
         } else {
@@ -61,7 +64,7 @@ public class DataSource<Data> {
      *                         DataController} and the existing async data requests, if any, will continue to stay
      *                         alive.
      */
-    public void close(boolean completeShutdown) {
+    public synchronized void close(boolean completeShutdown) {
         listener = null;
 
         if (dataController != null) {
@@ -76,7 +79,7 @@ public class DataSource<Data> {
     /**
      * Called to dispatch fetching start indication via the delegate.
      */
-    protected void onFetchStarted() {
+    protected synchronized void onFetchStarted() {
         dispatchResult(new Runnable() {
             @Override
             public void run() {
@@ -87,7 +90,7 @@ public class DataSource<Data> {
         });
     }
 
-    protected void onFetchFinished() {
+    protected synchronized void onFetchFinished() {
         dispatchResult(new Runnable() {
             @Override
             public void run() {
@@ -101,12 +104,12 @@ public class DataSource<Data> {
     /**
      * Called to dispatch loading the data via the delegate.
      */
-    protected void onDataLoaded(final ResultInfo<Data> resultInfo) {
+    protected synchronized void onDataLoaded(final DataResult<Data> dataResult) {
         dispatchResult(new Runnable() {
             @Override
             public void run() {
                 if (listener != null) {
-                    listener.onDataReceived(resultInfo);
+                    listener.onDataReceived(dataResult);
                 }
             }
         });
@@ -115,7 +118,7 @@ public class DataSource<Data> {
     /**
      * Called to dispatch showing an error via the delegate.
      */
-    protected void onError(final ErrorInfo errorInfo) {
+    protected synchronized void onError(final ErrorInfo errorInfo) {
         dispatchResult(new Runnable() {
             @Override
             public void run() {
@@ -134,7 +137,7 @@ public class DataSource<Data> {
         }
     }
 
-    DataControllerListener<Data> dataControllerListener = new DataControllerListener<Data>() {
+    private DataControllerListener<Data> dataControllerListener = new DataControllerListener<Data>() {
         @Override
         public void onDataFetchStarted() {
             DataSource.this.onFetchStarted();
@@ -146,8 +149,8 @@ public class DataSource<Data> {
         }
 
         @Override
-        public void onDataReceived(ResultInfo<Data> resultInfo) {
-            DataSource.this.onDataLoaded(resultInfo);
+        public void onDataReceived(DataResult<Data> dataResult) {
+            DataSource.this.onDataLoaded(dataResult);
         }
 
         @Override

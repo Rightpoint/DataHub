@@ -1,28 +1,31 @@
 package com.raizlabs.datacontroller;
 
-import android.support.annotation.IntDef;
-
 public class DCError extends java.lang.Error {
 
-    //@formatter:off
-    @IntDef({
-            DATA_ACCESS,
-            INVALID_STATE
-    })
-    public @interface ErrorType { }
-    //@formatter:on
+    public static class Types {
+        public static final int UNDEFINED = 0;
+        public static final int DATA_ACCESS = 100;
+        public static final int INVALID_STATE = 400;
+    }
 
-    public static final int DATA_ACCESS = 100;
-    public static final int INVALID_STATE = 400;
+    private int errorType;
+    private Object tag;
 
-    private @ErrorType int errorType;
+    public DCError(String message, int errorType) {
+        this(message, errorType, null);
+    }
 
-    public DCError(String message, @ErrorType int errorType) {
+    public DCError(String message, int errorType, Object tag) {
         super(message);
         this.errorType = errorType;
+        this.tag = tag;
     }
 
     public int getErrorType() {
         return errorType;
+    }
+
+    public Object getTag() {
+        return tag;
     }
 }

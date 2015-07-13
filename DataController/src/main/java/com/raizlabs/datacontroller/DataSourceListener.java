@@ -14,9 +14,9 @@ public interface DataSourceListener<Data> {
 
     /**
      * Called when data has been fetched.
-     * @param resultInfo The fetched data.
+     * @param dataResult The fetched data.
      */
-    public void onDataReceived(ResultInfo<Data> resultInfo);
+    public void onDataReceived(DataResult<Data> dataResult);
 
     /**
      * Called when the data fetch has failed.
