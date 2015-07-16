@@ -1,4 +1,6 @@
-package com.raizlabs.datacontroller;
+package com.raizlabs.datacontroller.access;
+
+import com.raizlabs.datacontroller.DCError;
 
 public class DataAccessResult<Data> {
 

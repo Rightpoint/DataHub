@@ -1,8 +1,6 @@
 package com.raizlabs.datacontroller.controller.ordered;
 
-import android.provider.ContactsContract;
-
-import com.raizlabs.datacontroller.DataAccessResult;
+import com.raizlabs.datacontroller.access.DataAccessResult;
 import com.raizlabs.datacontroller.access.AsynchronousDataAccess;
 
 import java.util.ArrayList;

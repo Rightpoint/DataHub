@@ -1,6 +1,6 @@
 package com.raizlabs.datacontroller.controller.helpers;
 
-import com.raizlabs.datacontroller.DataAccessResult;
+import com.raizlabs.datacontroller.access.DataAccessResult;
 import com.raizlabs.datacontroller.access.AsynchronousDataAccess;
 
 public class ImmediateResponseAsyncAccess<T> implements AsynchronousDataAccess<T> {

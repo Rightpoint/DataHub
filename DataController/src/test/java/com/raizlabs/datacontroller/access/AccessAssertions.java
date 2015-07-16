@@ -1,7 +1,5 @@
 package com.raizlabs.datacontroller.access;
 
-import com.raizlabs.datacontroller.DataAccessResult;
-
 import junit.framework.Assert;
 
 public class AccessAssertions {

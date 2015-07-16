@@ -16,8 +16,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
 
-import com.raizlabs.datacontroller.DataSource;
-import com.raizlabs.datacontroller.DataSourceListener;
+import com.raizlabs.datacontroller.source.DataSource;
+import com.raizlabs.datacontroller.source.DataSourceListener;
 import com.raizlabs.datacontroller.ErrorInfo;
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.sample.data.RecyclerAdapter;

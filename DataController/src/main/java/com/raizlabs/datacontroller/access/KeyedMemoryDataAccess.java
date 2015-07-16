@@ -1,7 +1,6 @@
 package com.raizlabs.datacontroller.access;
 
 
-import com.raizlabs.datacontroller.DataAccessResult;
 import com.raizlabs.datacontroller.controller.DataController;
 
 public class KeyedMemoryDataAccess<Data> implements SynchronousDataAccess<Data> {

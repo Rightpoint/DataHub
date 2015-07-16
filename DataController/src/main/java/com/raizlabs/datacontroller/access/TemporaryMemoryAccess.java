@@ -1,6 +1,5 @@
 package com.raizlabs.datacontroller.access;
 
-import com.raizlabs.datacontroller.DataAccessResult;
 import com.raizlabs.datacontroller.controller.DataController;
 
 public class TemporaryMemoryAccess<Data> implements SynchronousDataAccess<Data> {

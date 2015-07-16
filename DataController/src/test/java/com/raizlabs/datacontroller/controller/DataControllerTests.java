@@ -1,7 +1,7 @@
 package com.raizlabs.datacontroller.controller;
 
 import com.raizlabs.datacontroller.DCError;
-import com.raizlabs.datacontroller.DataAccessResult;
+import com.raizlabs.datacontroller.access.DataAccessResult;
 import com.raizlabs.datacontroller.ErrorInfo;
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.utils.Wrapper;

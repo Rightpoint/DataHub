@@ -1,7 +1,9 @@
-package com.raizlabs.datacontroller;
+package com.raizlabs.datacontroller.source;
 
 import android.os.Handler;
 
+import com.raizlabs.datacontroller.DataResult;
+import com.raizlabs.datacontroller.ErrorInfo;
 import com.raizlabs.datacontroller.controller.ControllerResult;
 import com.raizlabs.datacontroller.controller.DataController;
 import com.raizlabs.datacontroller.controller.DataControllerListener;

@@ -1,4 +1,7 @@
-package com.raizlabs.datacontroller;
+package com.raizlabs.datacontroller.source;
+
+import com.raizlabs.datacontroller.DataResult;
+import com.raizlabs.datacontroller.ErrorInfo;
 
 public interface DataSourceListener<Data> {
 

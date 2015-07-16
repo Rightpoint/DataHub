@@ -1,7 +1,5 @@
 package com.raizlabs.datacontroller.access;
 
-import com.raizlabs.datacontroller.DataAccessResult;
-
 public interface AsynchronousDataAccess<Data> {
 
     public interface Callback<Data> {
