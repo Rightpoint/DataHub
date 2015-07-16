@@ -35,7 +35,7 @@ public class CachedDataManagerTests extends BaseKeyedDataManagerTests {
         // Verify all values exist
         // This accesses in the same order as they were added such that the first item is the LRU in the cache
         for (KeyedMemoryDataAccess<Object> access : accesses) {
-            AccessAssertions.assertDataNotNull(access.get());
+            AccessAssertions.assertDataNotNull(access);
         }
 
         // Overflow once and expect the first item to be missing.
@@ -46,9 +46,9 @@ public class CachedDataManagerTests extends BaseKeyedDataManagerTests {
         boolean first = true;
         for (KeyedMemoryDataAccess<Object> access : accesses) {
             if (first) {
-                AccessAssertions.assertDataUnavailable(access.get());
+                AccessAssertions.assertDataUnavailable(access);
             } else {
-                AccessAssertions.assertDataNotNull(access.get());
+                AccessAssertions.assertDataNotNull(access);
             }
 
             first = false;

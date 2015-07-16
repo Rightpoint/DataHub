@@ -1,6 +1,6 @@
 package com.raizlabs.datacontroller.sample.data.school;
 
-import com.raizlabs.datacontroller.controller.OrderedDataController;
+import com.raizlabs.datacontroller.controller.ordered.OrderedDataController;
 import com.raizlabs.datacontroller.sample.dataacess.BaseDiskListDataAccess;
 import com.raizlabs.datacontroller.sample.dataacess.BaseMemoryDataAccess;
 import com.raizlabs.datacontroller.sample.dataacess.VolleyWebListDataAccess;

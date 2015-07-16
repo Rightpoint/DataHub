@@ -42,10 +42,10 @@ public abstract class BaseKeyedDataManagerTests {
         final Object value = new Object();
         final KeyedMemoryDataAccess<Object> access = getDataManager().createDataAccess(key);
 
-        AccessAssertions.assertDataUnavailable(access.get());
+        AccessAssertions.assertDataUnavailable(access);
 
         getDataManager().set(key, value);
-        AccessAssertions.assertDataEquals(value, access.get());
+        AccessAssertions.assertDataEquals(value, access);
     }
 
     @Test
@@ -56,12 +56,12 @@ public abstract class BaseKeyedDataManagerTests {
         final KeyedMemoryDataAccess<Object> access1 = getDataManager().createDataAccess(key);
         final KeyedMemoryDataAccess<Object> access2 = getDataManager().createDataAccess(key);
 
-        AccessAssertions.assertDataUnavailable(access1.get());
-        AccessAssertions.assertDataUnavailable(access2.get());
+        AccessAssertions.assertDataUnavailable(access1);
+        AccessAssertions.assertDataUnavailable(access2);
 
         getDataManager().set(key, value);
-        AccessAssertions.assertDataEquals(value, access1.get());
-        AccessAssertions.assertDataEquals(value, access2.get());
+        AccessAssertions.assertDataEquals(value, access1);
+        AccessAssertions.assertDataEquals(value, access2);
     }
 
     @Test
@@ -70,12 +70,12 @@ public abstract class BaseKeyedDataManagerTests {
         final Object value = new Object();
         final KeyedMemoryDataAccess<Object> access = getDataManager().createDataAccess(key);
 
-        AccessAssertions.assertDataUnavailable(access.get());
+        AccessAssertions.assertDataUnavailable(access);
 
         access.importData(value);
-        AccessAssertions.assertDataEquals(value, access.get());
+        AccessAssertions.assertDataEquals(value, access);
 
         access.clear();
-        AccessAssertions.assertDataUnavailable(access.get());
+        AccessAssertions.assertDataUnavailable(access);
     }
 }
