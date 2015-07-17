@@ -4,26 +4,15 @@ import com.raizlabs.datacontroller.DCError;
 
 public class DataAccessResult<Data> {
 
-    private boolean wasDataAvailable;
     private DCError error;
     private Data data;
 
-    private DataAccessResult() {
-        wasDataAvailable = false;
-    }
-
     private DataAccessResult(DCError error) {
-        this.wasDataAvailable = true;
         this.error = error;
     }
 
     private DataAccessResult(Data data) {
-        this.wasDataAvailable = true;
         this.data = data;
-    }
-
-    public boolean wasDataAvailable() {
-        return wasDataAvailable;
     }
 
     public DCError getError() {
@@ -35,7 +24,7 @@ public class DataAccessResult<Data> {
     }
 
     public boolean hasValidData() {
-        return (getError() == null) && wasDataAvailable;
+        return (getError() == null);
     }
 
     public static <T> DataAccessResult<T> fromResult(T data) {
@@ -43,7 +32,7 @@ public class DataAccessResult<Data> {
     }
 
     public static <T> DataAccessResult<T> fromUnavailable() {
-        return new DataAccessResult<>();
+        return new DataAccessResult<>(DCError.fromUnavailable());
     }
 
     public static <T> DataAccessResult<T> fromError(DCError error) {

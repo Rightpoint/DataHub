@@ -9,8 +9,6 @@ public class ControllerAssertions {
     public static void assertDataUnavailable(ControllerResult<?> result) {
         AccessAssertions.assertDataUnavailable(result.getAccessResult());
         Assert.assertNull(result.getData());
-        Assert.assertNull(result.getError());
-        Assert.assertFalse(result.wasDataAvailable());
         Assert.assertFalse(result.hasValidData());
     }
 
@@ -18,7 +16,6 @@ public class ControllerAssertions {
         AccessAssertions.assertDataNotNull(result.getAccessResult());
         Assert.assertNotNull(result.getData());
         Assert.assertNull(result.getError());
-        Assert.assertTrue(result.wasDataAvailable());
         Assert.assertTrue(result.hasValidData());
     }
 
@@ -26,7 +23,6 @@ public class ControllerAssertions {
         AccessAssertions.assertDataEquals(expectedData, result.getAccessResult());
         Assert.assertNotNull(result.getData());
         Assert.assertNull(result.getError());
-        Assert.assertTrue(result.wasDataAvailable());
         Assert.assertTrue(result.hasValidData());
     }
 

@@ -23,10 +23,6 @@ public class ControllerResult<Data> {
         return accessResult.getError();
     }
 
-    public boolean wasDataAvailable() {
-        return accessResult.wasDataAvailable();
-    }
-
     public boolean hasValidData() {
         return accessResult.hasValidData();
     }
