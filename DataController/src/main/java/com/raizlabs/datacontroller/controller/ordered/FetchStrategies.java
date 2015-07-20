@@ -1,163 +1,91 @@
 package com.raizlabs.datacontroller.controller.ordered;
 
-import com.raizlabs.datacontroller.access.DataAccessResult;
 import com.raizlabs.datacontroller.access.AsynchronousDataAccess;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.raizlabs.datacontroller.access.DataAccess;
+import com.raizlabs.datacontroller.access.DataAccessResult;
+import com.raizlabs.datacontroller.access.SynchronousDataAccess;
 
 public class FetchStrategies {
 
-    public static class Parallel<T> implements FetchStrategy<T>, ResultProcessor<T> {
-        private OrderedDataController<T> dataController;
-
-        private List<AsynchronousDataAccess<T>> dataAccesses;
-        private int lastAccessIndex;
-
-        private CancelableCallback<T> previousCallback;
+    public static class Parallel<T> extends BaseFetchStrategy<T> {
 
         @Override
-        public void setDataController(OrderedDataController<T> dataController) {
-            this.dataController = dataController;
-        }
-
-        @Override
-        public synchronized void fetch() {
-            // If we're already running, don't start another update.
+        public void onResult(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
             if (isPending()) {
-                return;
-            }
+                final int index = getAccessIndex(access);
+                // Only process the result if the index increased
+                if (index > getLastAccessIndex()) {
+                    setLastAccessIndex(index);
+                    // If this was the last one, finish everything
+                    if ((access.getSourceId() == getFetchLimitId()) ||
+                            (index >= getAsyncDataAccesses().size() - 1)) {
+                        close();
+                    }
 
-            lastAccessIndex = -1;
-
-            // Stop any existing calls to "reset"
-            close();
-
-            CancelableCallback<T> callback = new CancelableCallback<>(this);
-            previousCallback = callback;
-
-            this.dataAccesses = new ArrayList<>(dataController.getAsyncDataAccesses());
-
-            // Start each access
-            // Can't do both operations simultaneously in case accesses return in line.
-            for (AsynchronousDataAccess<T> access : dataAccesses) {
-                access.get(callback);
-            }
-
-        }
-
-        @Override
-        public synchronized boolean isPending() {
-            return (previousCallback != null);
-        }
-
-        @Override
-        public synchronized void close() {
-            if (previousCallback != null) {
-                previousCallback.close();
-                previousCallback = null;
+                    processResult(result, access);
+                }
             }
         }
 
         @Override
-        public synchronized void onResult(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
-            if (onAccessResult(getAccessIndex(access))) {
-                dataController.processAsyncResult(result, access);
-            }
-        }
+        protected void doFetch(int limitId) {
 
-        /**
-         * @param index
-         * @return True if the result of the given index should be processed.
-         */
-        private synchronized boolean onAccessResult(int index) {
-            // Only process the result if the index increased
-            if (index > lastAccessIndex && isPending()) {
-                lastAccessIndex = index;
+            SynchronousDataAccess<T> syncAccess = getDataController().getSyncDataAccess();
+            if (syncAccess != null && isPending()) {
+                DataAccessResult<T> syncResult = syncAccess.get();
 
-                // This was the last one, finish everything
-                if (index >= dataAccesses.size() - 1) {
+                // If the id matches the limit, we're done
+                if (syncAccess.getSourceId() == limitId) {
                     close();
                 }
 
-                return true;
-            } else {
-                return false;
+                if (syncResult != null) {
+                    getDataController().processResult(syncResult, syncAccess);
+                }
             }
-        }
 
-        private int getAccessIndex(AsynchronousDataAccess<T> access) {
-            return dataAccesses.indexOf(access);
+            // Don't continue if we're already done from any above logic
+            if (isPending()) {
+                // Start each access
+                // Can't do both operations simultaneously in case accesses return in line.
+                for (AsynchronousDataAccess<T> access : getAsyncDataAccesses()) {
+                    access.get(getCurrentCallback());
+
+                    if (access.getSourceId() == limitId) {
+                        break;
+                    }
+                }
+            }
         }
     }
 
-    public static class Serial<T> implements FetchStrategy<T>, ResultProcessor<T> {
+    public static class Serial<T> extends BaseFetchStrategy<T> {
 
         public interface DataValidator<T> {
-            public boolean isReturnable(DataAccessResult<T> result, AsynchronousDataAccess<T> access);
-            public boolean isFinal(DataAccessResult<T> result, AsynchronousDataAccess<T> access);
+            public boolean isFinal(DataAccessResult<T> result, DataAccess access);
         }
 
-        private OrderedDataController<T> dataController;
         private DataValidator<T> dataValidator;
-
-        private List<AsynchronousDataAccess<T>> dataAccesses;
-        private int lastAccessIndex;
-
-        private CancelableCallback<T> previousCallback;
 
         public Serial(DataValidator<T> validator) {
             this.dataValidator = validator;
         }
 
         @Override
-        public void setDataController(OrderedDataController<T> dataController) {
-            this.dataController = dataController;
-        }
-
-        @Override
-        public synchronized void fetch() {
-            // If we're already running, don't start another update.
+        public void onResult(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
             if (isPending()) {
-                return;
-            }
+                final int index = getAccessIndex(access);
 
-            lastAccessIndex = -1;
+                // If this is the last access, last access allowed by the limit, or the validator says it's done, terminate
+                if ((index >= getAsyncDataAccesses().size() - 1) ||
+                        (access.getSourceId() == getFetchLimitId()) ||
+                        dataValidator.isFinal(result, access)) {
+                    close();
+                }
 
-            // Stop any existing calls to "reset"
-            close();
+                processResult(result, access);
 
-            previousCallback = new CancelableCallback<>(this);
-
-            this.dataAccesses = new ArrayList<>(dataController.getAsyncDataAccesses());
-
-            queryNext();
-        }
-
-        @Override
-        public synchronized boolean isPending() {
-            return (previousCallback != null);
-        }
-
-        @Override
-        public synchronized void close() {
-            if (previousCallback != null) {
-                previousCallback.close();
-                previousCallback = null;
-            }
-        }
-
-        @Override
-        public synchronized void onResult(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
-            int index = dataAccesses.indexOf(access);
-
-            // If this is the last access or the validator says it's done, terminate
-            if ((index >= dataAccesses.size() - 1) || dataValidator.isFinal(result, access)) {
-                close();
-            }
-
-            if (dataValidator.isReturnable(result, access)) {
-                dataController.processAsyncResult(result, access);
+                setLastAccessIndex(index);
             }
 
             if (isPending()) {
@@ -165,20 +93,45 @@ public class FetchStrategies {
             }
         }
 
+        @Override
+        protected void doFetch(int limitId) {
+            SynchronousDataAccess<T> syncAccess = getDataController().getSyncDataAccess();
+
+            // Process the synchronous access
+            if (syncAccess != null) {
+                DataAccessResult<T> syncResult = syncAccess.get();
+
+                // If the id matches the limit, or the validator marks it as final, we're done
+                if ((syncAccess.getSourceId() == limitId) || dataValidator.isFinal(syncResult, syncAccess)) {
+                    close();
+                }
+
+                getDataController().processResult(syncResult, syncAccess);
+            }
+
+            // Don't continue if we're already done from any above logic
+            if (isPending()) {
+                queryNext();
+            }
+        }
+
         protected void queryNext() {
-            dataAccesses.get(++lastAccessIndex).get(previousCallback);
+            final int nextIndex = getLastAccessIndex() + 1;
+
+            // Ran off the end? Shouldn't get here...close!
+            if (nextIndex >= getAsyncDataAccesses().size()) {
+                close();
+            }
+
+            AsynchronousDataAccess<T> access = getAsyncDataAccesses().get(nextIndex);
+            access.get(getCurrentCallback());
         }
 
         public static class Validators {
             public static <T> DataValidator<T> newAny() {
                 return new DataValidator<T>() {
                     @Override
-                    public boolean isReturnable(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
-                        return true;
-                    }
-
-                    @Override
-                    public boolean isFinal(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
+                    public boolean isFinal(DataAccessResult<T> result, DataAccess access) {
                         return true;
                     }
                 };
@@ -187,12 +140,7 @@ public class FetchStrategies {
             public static <T> DataValidator<T> newValidOnly() {
                 return new DataValidator<T>() {
                     @Override
-                    public boolean isReturnable(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
-                        return result.hasValidData();
-                    }
-
-                    @Override
-                    public boolean isFinal(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
+                    public boolean isFinal(DataAccessResult<T> result, DataAccess access) {
                         return result.hasValidData();
                     }
                 };
@@ -201,12 +149,7 @@ public class FetchStrategies {
             public static <T> DataValidator<T> newDataOrError() {
                 return new DataValidator<T>() {
                     @Override
-                    public boolean isReturnable(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
-                        return result.getData() != null || result.getError() != null;
-                    }
-
-                    @Override
-                    public boolean isFinal(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
+                    public boolean isFinal(DataAccessResult<T> result, DataAccess access) {
                         return result.getData() != null || result.getError() != null;
                     }
                 };

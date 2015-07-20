@@ -1,15 +1,12 @@
 package com.raizlabs.datacontroller.access;
 
-import com.raizlabs.datacontroller.DCError;
-
 import junit.framework.Assert;
 
 public class AccessAssertions {
 
     public static void assertDataUnavailable(DataAccessResult<?> result) {
         Assert.assertNull(result.getData());
-        Assert.assertNotNull(result.getError());
-        Assert.assertTrue(result.getError().getErrorType() == DCError.Types.DATA_UNAVAILABLE);
+        Assert.assertNull(result.getError());
         Assert.assertFalse(result.hasValidData());
     }
 

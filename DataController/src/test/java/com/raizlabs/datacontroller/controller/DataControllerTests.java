@@ -33,6 +33,12 @@ public class DataControllerTests {
             }
 
             @Override
+            protected void doFetch(int limitId) {
+                // Unused / stub
+                doFetch();
+            }
+
+            @Override
             protected void doImportData(Object o) {
                 importCalled.set(true);
             }

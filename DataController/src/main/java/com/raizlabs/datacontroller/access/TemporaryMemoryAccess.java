@@ -38,7 +38,7 @@ public class TemporaryMemoryAccess<Data> implements SynchronousDataAccess<Data> 
 
     @Override
     public int getSourceId() {
-        return 0;
+        return sourceId;
     }
 
     public synchronized void clear() {

@@ -1,5 +1,6 @@
 package com.raizlabs.datacontroller.controller;
 
+import com.raizlabs.datacontroller.access.DataAccess;
 import com.raizlabs.datacontroller.access.DataAccessResult;
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.ErrorInfo;
@@ -19,7 +20,12 @@ public class SerialDataControllerTests extends BaseOrderedDataControllerTests {
 
     @Override
     protected OrderedDataController.Builder<Object> createNewBuilder() {
-        return OrderedDataController.Builder.newSerial(FetchStrategies.Serial.Validators.newValidOnly());
+        return OrderedDataController.Builder.newSerial(new FetchStrategies.Serial.DataValidator<Object>() {
+            @Override
+            public boolean isFinal(DataAccessResult<Object> result, DataAccess access) {
+                return false;
+            }
+        });
     }
 
     @Test
@@ -37,12 +43,7 @@ public class SerialDataControllerTests extends BaseOrderedDataControllerTests {
 
         final FetchStrategies.Serial.DataValidator<Object> validator = new FetchStrategies.Serial.DataValidator<Object>() {
             @Override
-            public boolean isReturnable(DataAccessResult<Object> result, AsynchronousDataAccess<Object> access) {
-                return true;
-            }
-
-            @Override
-            public boolean isFinal(DataAccessResult<Object> result, AsynchronousDataAccess<Object> access) {
+            public boolean isFinal(DataAccessResult<Object> result, DataAccess access) {
                 return validValue.equals(result.getData());
             }
         };
@@ -93,16 +94,9 @@ public class SerialDataControllerTests extends BaseOrderedDataControllerTests {
         final AsynchronousDataAccess<Object> validAccess = new ImmediateResponseAsyncAccess<>(validResult, 5);
         final AsynchronousDataAccess<Object> invalidAccess = new ImmediateResponseAsyncAccess<>(invalidResult, 6);
 
-        final Wrapper<Boolean> allowInvalid = new Wrapper<>(false);
-
         final FetchStrategies.Serial.DataValidator<Object> validator = new FetchStrategies.Serial.DataValidator<Object>() {
             @Override
-            public boolean isReturnable(DataAccessResult<Object> result, AsynchronousDataAccess<Object> access) {
-                return allowInvalid.get() || validValue.equals(result.getData());
-            }
-
-            @Override
-            public boolean isFinal(DataAccessResult<Object> result, AsynchronousDataAccess<Object> access) {
+            public boolean isFinal(DataAccessResult<Object> result, DataAccess access) {
                 return validValue.equals(result.getData());
             }
         };
@@ -147,18 +141,7 @@ public class SerialDataControllerTests extends BaseOrderedDataControllerTests {
         Assert.assertFalse(receivedInvalid.get());
         Assert.assertFalse(receivedValid.get());
 
-        // Do a fetch and make sure we only receive the valid data
-        dataController.fetch();
-
-        Assert.assertFalse(receivedInvalid.get());
-        Assert.assertTrue(receivedValid.get());
-
-        // Reset...
-        receivedInvalid.set(false);
-        receivedValid.set(false);
-
-        // Allow invalids through and ensure we receive both responses
-        allowInvalid.set(true);
+        // Do a fetch and make sure we receive both values
         dataController.fetch();
 
         Assert.assertTrue(receivedInvalid.get());

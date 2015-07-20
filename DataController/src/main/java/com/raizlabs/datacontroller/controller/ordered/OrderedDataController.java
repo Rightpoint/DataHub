@@ -1,5 +1,6 @@
 package com.raizlabs.datacontroller.controller.ordered;
 
+import com.raizlabs.datacontroller.access.DataAccess;
 import com.raizlabs.datacontroller.access.DataAccessResult;
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.access.AsynchronousDataAccess;
@@ -8,6 +9,7 @@ import com.raizlabs.datacontroller.controller.ControllerResult;
 import com.raizlabs.datacontroller.controller.DataController;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -69,6 +71,7 @@ public class OrderedDataController<Data> extends DataController<Data> {
 
     private SynchronousDataAccess<Data> syncDataAccess;
     private List<AsynchronousDataAccess<Data>> asyncDataAccesses;
+    private List<AsynchronousDataAccess<Data>> publicDataAccesses;
     private FetchStrategy<Data> fetchStrategy;
 
     public OrderedDataController(FetchStrategy<Data> strategy, SynchronousDataAccess<Data> synchronous, List<AsynchronousDataAccess<Data>> asynchronous, boolean backport) {
@@ -85,6 +88,7 @@ public class OrderedDataController<Data> extends DataController<Data> {
                 this.asyncDataAccesses.add(access);
             }
         }
+        this.publicDataAccesses = Collections.unmodifiableList(this.asyncDataAccesses);
 
         setShouldBackport(backport);
     }
@@ -97,8 +101,12 @@ public class OrderedDataController<Data> extends DataController<Data> {
         return shouldBackport;
     }
 
-    List<AsynchronousDataAccess<Data>> getAsyncDataAccesses() {
-        return asyncDataAccesses;
+    public SynchronousDataAccess<Data> getSyncDataAccess() {
+        return syncDataAccess;
+    }
+
+    public List<AsynchronousDataAccess<Data>> getAsyncDataAccesses() {
+        return Collections.unmodifiableList(asyncDataAccesses);
     }
 
     @Override
@@ -114,6 +122,11 @@ public class OrderedDataController<Data> extends DataController<Data> {
     @Override
     protected void doFetch() {
         fetchStrategy.fetch();
+    }
+
+    @Override
+    protected void doFetch(int limitId) {
+        fetchStrategy.fetch(limitId);
     }
 
     @Override
@@ -167,13 +180,14 @@ public class OrderedDataController<Data> extends DataController<Data> {
     }
 
     protected boolean shouldBackportResult(DataResult<Data> dataResult) {
-        return true;
+        return (dataResult.getData() != null);
     }
 
-    protected void processAsyncResult(DataAccessResult<Data> data, AsynchronousDataAccess<Data> access) {
+    protected void processResult(DataAccessResult<Data> data, DataAccess access) {
         synchronized (getDataLock()) {
             if (!isClosed()) {
-                ControllerResult<Data> result = new ControllerResult<>(data, access.getSourceId(), isFetching());
+                int accessId = (access != null) ? access.getSourceId() : DataSourceIds.NONE;
+                ControllerResult<Data> result = new ControllerResult<>(data, accessId, isFetching());
                 processResult(result);
             }
         }

@@ -6,7 +6,7 @@ import com.raizlabs.datacontroller.utils.OneShotLock;
 
 public class WaitForLockAsyncAccess<T> implements AsynchronousDataAccess<T> {
 
-    private final OneShotLock completionLock = new OneShotLock();
+    private OneShotLock completionLock = new OneShotLock();
 
     private final DataAccessResult<T> result;
     private final OneShotLock startLock;
@@ -48,5 +48,9 @@ public class WaitForLockAsyncAccess<T> implements AsynchronousDataAccess<T> {
 
     public OneShotLock getCompletionLock() {
         return completionLock;
+    }
+
+    public void reset() {
+        completionLock = new OneShotLock();
     }
 }

@@ -1,13 +1,15 @@
 package com.raizlabs.datacontroller.controller;
 
-import com.raizlabs.datacontroller.access.DataAccessResult;
+import com.raizlabs.datacontroller.DCError;
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.ErrorInfo;
 import com.raizlabs.datacontroller.access.AccessAssertions;
 import com.raizlabs.datacontroller.access.AsynchronousDataAccess;
+import com.raizlabs.datacontroller.access.DataAccessResult;
 import com.raizlabs.datacontroller.access.KeyedMemoryDataAccess;
 import com.raizlabs.datacontroller.access.MemoryDataManager;
 import com.raizlabs.datacontroller.controller.helpers.ImmediateResponseAsyncAccess;
+import com.raizlabs.datacontroller.controller.helpers.TrackedTemporaryMemoryAccess;
 import com.raizlabs.datacontroller.controller.helpers.WaitForLockAsyncAccess;
 import com.raizlabs.datacontroller.controller.ordered.OrderedDataController;
 import com.raizlabs.datacontroller.utils.OneShotLock;
@@ -155,7 +157,7 @@ public abstract class BaseOrderedDataControllerTests {
         Assert.assertFalse(dataController.isFetching());
 
         Assert.assertTrue(listenerFinished.get());
-        Assert.assertEquals(1, listenerReceivedCount.get());
+        Assert.assertEquals(2, listenerReceivedCount.get());
 
         Assert.assertEquals(value, listenerResult.get());
         ControllerAssertions.assertDataEquals(value, dataController.get());
@@ -169,7 +171,7 @@ public abstract class BaseOrderedDataControllerTests {
         final OneShotLock finishedLock = new OneShotLock();
         final List<Wrapper<Boolean>> wasImported = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            wasImported.add(new Wrapper<Boolean>(false));
+            wasImported.add(new Wrapper<>(false));
         }
 
         final AsynchronousDataAccess<Object> firstAccess = new ImmediateResponseAsyncAccess<Object>(DataAccessResult.fromUnavailable(), 99) {
@@ -238,5 +240,108 @@ public abstract class BaseOrderedDataControllerTests {
         Assert.assertTrue(wasImported.get(0).get());
         Assert.assertFalse(wasImported.get(1).get());
         Assert.assertFalse(wasImported.get(2).get());
+    }
+
+    @Test
+    public void testLimits() {
+        final Object firstValue = new Object();
+        final Object secondValue = new Object();
+
+        final TrackedTemporaryMemoryAccess<Object> memoryAccess = new TrackedTemporaryMemoryAccess<>(99);
+        final ImmediateResponseAsyncAccess<Object> firstAccess = new ImmediateResponseAsyncAccess<>(DataAccessResult.fromUnavailable(), 88);
+        final ImmediateResponseAsyncAccess<Object> secondAccess = new ImmediateResponseAsyncAccess<>(DataAccessResult.fromResult(firstValue), 77);
+        final ImmediateResponseAsyncAccess<Object> thirdAccess = new ImmediateResponseAsyncAccess<>(DataAccessResult.fromResult(secondValue), 66);
+
+        final DataController<Object> dataController =
+                createNewBuilder()
+                        .setSynchronousAccess(memoryAccess)
+                        .addAsynchronousAccess(firstAccess)
+                        .addAsynchronousAccess(secondAccess)
+                        .addAsynchronousAccess(thirdAccess)
+                        .build();
+
+        final Wrapper<ErrorInfo> receivedError = new Wrapper<>();
+
+        dataController.addListener(new DataControllerListener<Object>() {
+            @Override
+            public void onDataFetchStarted() {
+
+            }
+
+            @Override
+            public void onDataFetchFinished() {
+
+            }
+
+            @Override
+            public void onDataReceived(DataResult<Object> dataResult) {
+
+            }
+
+            @Override
+            public void onErrorReceived(ErrorInfo errorInfo) {
+                receivedError.set(errorInfo);
+            }
+        });
+
+        dataController.fetch(memoryAccess.getSourceId());
+        Assert.assertTrue(memoryAccess.wasQueried());
+        Assert.assertFalse(firstAccess.getCompletionLock().isUnlocked());
+        Assert.assertFalse(secondAccess.getCompletionLock().isUnlocked());
+        Assert.assertFalse(thirdAccess.getCompletionLock().isUnlocked());
+        Assert.assertNull(receivedError.get());
+
+        memoryAccess.clear();
+        memoryAccess.reset();
+        firstAccess.reset();
+        secondAccess.reset();
+        thirdAccess.reset();
+
+        dataController.fetch(firstAccess.getSourceId());
+        Assert.assertTrue(memoryAccess.wasQueried());
+        Assert.assertTrue(firstAccess.getCompletionLock().isUnlocked());
+        Assert.assertFalse(secondAccess.getCompletionLock().isUnlocked());
+        Assert.assertFalse(thirdAccess.getCompletionLock().isUnlocked());
+        Assert.assertNull(receivedError.get());
+
+        memoryAccess.clear();
+        memoryAccess.reset();
+        firstAccess.reset();
+        secondAccess.reset();
+        thirdAccess.reset();
+
+        dataController.fetch(secondAccess.getSourceId());
+        Assert.assertTrue(memoryAccess.wasQueried());
+        Assert.assertTrue(firstAccess.getCompletionLock().isUnlocked());
+        Assert.assertTrue(secondAccess.getCompletionLock().isUnlocked());
+        Assert.assertFalse(thirdAccess.getCompletionLock().isUnlocked());
+        Assert.assertNull(receivedError.get());
+
+        memoryAccess.clear();
+        memoryAccess.reset();
+        firstAccess.reset();
+        secondAccess.reset();
+        thirdAccess.reset();
+
+        dataController.fetch(thirdAccess.getSourceId());
+        Assert.assertTrue(memoryAccess.wasQueried());
+        Assert.assertTrue(firstAccess.getCompletionLock().isUnlocked());
+        Assert.assertTrue(secondAccess.getCompletionLock().isUnlocked());
+        Assert.assertTrue(thirdAccess.getCompletionLock().isUnlocked());
+        Assert.assertNull(receivedError.get());
+
+        memoryAccess.clear();
+        memoryAccess.reset();
+        firstAccess.reset();
+        secondAccess.reset();
+        thirdAccess.reset();
+
+        dataController.fetch(564);
+        Assert.assertFalse(memoryAccess.wasQueried());
+        Assert.assertFalse(firstAccess.getCompletionLock().isUnlocked());
+        Assert.assertFalse(secondAccess.getCompletionLock().isUnlocked());
+        Assert.assertFalse(thirdAccess.getCompletionLock().isUnlocked());
+        Assert.assertNotNull(receivedError.get());
+        Assert.assertEquals(DCError.Types.DATA_ACCESS_NOT_FOUND, receivedError.get().getError().getErrorType());
     }
 }

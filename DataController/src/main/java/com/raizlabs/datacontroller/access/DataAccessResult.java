@@ -24,7 +24,7 @@ public class DataAccessResult<Data> {
     }
 
     public boolean hasValidData() {
-        return (getError() == null);
+        return (getError() == null) && (getData() != null);
     }
 
     public static <T> DataAccessResult<T> fromResult(T data) {
@@ -32,7 +32,7 @@ public class DataAccessResult<Data> {
     }
 
     public static <T> DataAccessResult<T> fromUnavailable() {
-        return new DataAccessResult<>(DCError.fromUnavailable());
+        return fromResult(null);
     }
 
     public static <T> DataAccessResult<T> fromError(DCError error) {

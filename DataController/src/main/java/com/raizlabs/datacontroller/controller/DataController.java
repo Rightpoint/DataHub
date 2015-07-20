@@ -12,6 +12,7 @@ import com.raizlabs.datacontroller.util.ThreadingUtils;
 public abstract class DataController<Data> {
 
     public static class DataSourceIds {
+        public static final int NONE = 0;
         public static final int MEMORY_DATA = 1000;
         public static final int DISK_DATA = 2000;
         public static final int WEB_DATA = 4000;
@@ -37,6 +38,7 @@ public abstract class DataController<Data> {
     protected abstract ControllerResult<Data> doGet();
 
     protected abstract void doFetch();
+    protected abstract void doFetch(int limitId);
 
     protected abstract void doImportData(Data data);
 
@@ -67,6 +69,17 @@ public abstract class DataController<Data> {
             } else if (!isFetching()) {
                 onFetchStarted();
                 doFetch();
+            }
+        }
+    }
+
+    public void fetch(int limitId) {
+        synchronized (getDataLock()) {
+            if (isClosed()) {
+                processClosedError();
+            } else if (!isFetching()) {
+                onFetchStarted();
+                doFetch(limitId);
             }
         }
     }
@@ -139,20 +152,20 @@ public abstract class DataController<Data> {
             dispatchResult(new Runnable() {
                 @Override
                 public void run() {
-                    if (controllerResult.hasValidData()) {
-                        final DataResult<Data> dataResult = new DataResult<>(
-                                controllerResult.getData(),
-                                controllerResult.getSourceId(),
-                                controllerResult.isFetching());
-
-                        notifyDataFetched(dataResult);
-                    } else if (controllerResult.getError() != null) {
+                    if (controllerResult.getError() != null) {
                         final ErrorInfo errorInfo = new ErrorInfo(
                                 controllerResult.getError(),
                                 controllerResult.getSourceId(),
                                 controllerResult.isFetching());
 
                         notifyError(errorInfo);
+                    } else {
+                        final DataResult<Data> dataResult = new DataResult<>(
+                                controllerResult.getData(),
+                                controllerResult.getSourceId(),
+                                controllerResult.isFetching());
+
+                        notifyDataFetched(dataResult);
                     }
 
                     if (!controllerResult.isFetching()) {
