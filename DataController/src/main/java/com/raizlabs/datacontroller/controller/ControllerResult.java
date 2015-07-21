@@ -1,9 +1,12 @@
 package com.raizlabs.datacontroller.controller;
 
 import com.raizlabs.datacontroller.DCError;
+import com.raizlabs.datacontroller.DataResult;
+import com.raizlabs.datacontroller.ErrorInfo;
 import com.raizlabs.datacontroller.access.DataAccessResult;
 
-public class ControllerResult<Data> {
+// TODO - Casting this to DataResult hides errors and looks like "unavailable"... Is it OK to accept this risk?
+public class ControllerResult<Data> implements DataResult<Data>, ErrorInfo {
 
     private DataAccessResult<Data> accessResult;
     private int sourceId;
@@ -15,10 +18,22 @@ public class ControllerResult<Data> {
         this.isFetching = isFetching;
     }
 
+    @Override
     public Data getData() {
         return accessResult.getData();
     }
 
+    @Override
+    public int getDataSourceId() {
+        return sourceId;
+    }
+
+    @Override
+    public boolean isUpdatePending() {
+        return isFetching;
+    }
+
+    @Override
     public DCError getError() {
         return accessResult.getError();
     }
@@ -29,13 +44,5 @@ public class ControllerResult<Data> {
 
     public DataAccessResult<Data> getAccessResult() {
         return accessResult;
-    }
-
-    public int getSourceId() {
-        return sourceId;
-    }
-
-    public boolean isFetching() {
-        return isFetching;
     }
 }

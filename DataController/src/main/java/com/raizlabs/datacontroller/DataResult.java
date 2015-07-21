@@ -1,26 +1,10 @@
 package com.raizlabs.datacontroller;
 
-public class DataResult<Data> {
+public interface DataResult<Data> {
 
-    private final Data data;
-    private final int dataSourceId;
-    private final boolean isUpdatePending;
+    public Data getData();
 
-    public DataResult(Data data, int dataSourceId, boolean isUpdatePending) {
-        this.data = data;
-        this.dataSourceId = dataSourceId;
-        this.isUpdatePending = isUpdatePending;
-    }
+    public int getDataSourceId();
 
-    public Data getData() {
-        return data;
-    }
-
-    public int getDataSourceId() {
-        return dataSourceId;
-    }
-
-    public boolean isUpdatePending() {
-        return isUpdatePending;
-    }
+    public boolean isUpdatePending();
 }

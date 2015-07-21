@@ -49,7 +49,7 @@ public class DataControllerTests {
             }
 
             @Override
-            protected boolean isFetching() {
+            public boolean isFetching() {
                 return false;
             }
 

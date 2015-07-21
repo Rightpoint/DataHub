@@ -70,7 +70,7 @@ public abstract class BaseOrderedDataControllerTests {
         dataAccess.importData(value);
 
         ControllerResult<Object> result = dataController.get();
-        Assert.assertEquals(sourceId, result.getSourceId());
+        Assert.assertEquals(sourceId, result.getDataSourceId());
         ControllerAssertions.assertDataEquals(value, result);
 
         // Ensure clearing functions properly
@@ -97,7 +97,7 @@ public abstract class BaseOrderedDataControllerTests {
         dataController.importData(value);
 
         ControllerResult<Object> result = dataController.get();
-        Assert.assertEquals(sourceId, result.getSourceId());
+        Assert.assertEquals(sourceId, result.getDataSourceId());
         ControllerAssertions.assertDataEquals(value, result);
     }
 

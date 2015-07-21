@@ -108,14 +108,6 @@ public abstract class BaseFetchStrategy<T> implements FetchStrategy<T>, ResultPr
         }
     }
 
-//    @Override
-//    public synchronized void onResult(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
-//        if (isPending() && shouldProcessResult(result, access)) {
-//            lastAccessIndex = getAccessIndex(access);
-//            getDataController().processResult(result, access);
-//        }
-//    }
-
     protected int getAccessIndex(AsynchronousDataAccess<T> access) {
         return asyncDataAccesses.indexOf(access);
     }

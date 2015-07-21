@@ -5,6 +5,7 @@ import android.os.Handler;
 import com.raizlabs.datacontroller.DCError;
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.ErrorInfo;
+import com.raizlabs.datacontroller.access.DataAccess;
 import com.raizlabs.datacontroller.imported.coreutils.Delegate;
 import com.raizlabs.datacontroller.imported.coreutils.MappableSet;
 import com.raizlabs.datacontroller.util.ThreadingUtils;
@@ -44,7 +45,7 @@ public abstract class DataController<Data> {
 
     protected abstract void doClose();
 
-    protected abstract boolean isFetching();
+    public abstract boolean isFetching();
     //endregion Abstract Methods
 
 
@@ -153,22 +154,12 @@ public abstract class DataController<Data> {
                 @Override
                 public void run() {
                     if (controllerResult.getError() != null) {
-                        final ErrorInfo errorInfo = new ErrorInfo(
-                                controllerResult.getError(),
-                                controllerResult.getSourceId(),
-                                controllerResult.isFetching());
-
-                        notifyError(errorInfo);
+                        notifyError(controllerResult);
                     } else {
-                        final DataResult<Data> dataResult = new DataResult<>(
-                                controllerResult.getData(),
-                                controllerResult.getSourceId(),
-                                controllerResult.isFetching());
-
-                        notifyDataFetched(dataResult);
+                        notifyDataFetched(controllerResult);
                     }
 
-                    if (!controllerResult.isFetching()) {
+                    if (!controllerResult.isUpdatePending()) {
                         onFetchFinished();
                     }
                 }
@@ -204,7 +195,7 @@ public abstract class DataController<Data> {
             dispatchResult(new Runnable() {
                 @Override
                 public void run() {
-                    notifyError(new ErrorInfo(ERROR_CLOSED, ErrorInfo.ACCESS_TYPE_NONE, isFetching()));
+                    notifyError(new ClosedErrorInfo(isFetching()));
                 }
             });
         }
@@ -217,6 +208,31 @@ public abstract class DataController<Data> {
             runnable.run();
         }
     }
+
+    private static class ClosedErrorInfo implements ErrorInfo {
+        private boolean isFetching;
+
+        public ClosedErrorInfo(boolean isFetching) {
+            this.isFetching = isFetching;
+
+        }
+
+        @Override
+        public DCError getError() {
+            return ERROR_CLOSED;
+        }
+
+        @Override
+        public int getDataSourceId() {
+            return ErrorInfo.ACCESS_TYPE_NONE;
+        }
+
+        @Override
+        public boolean isUpdatePending() {
+            return isFetching;
+        }
+    }
+
     //endregion Methods
 
     //region Overridable Events

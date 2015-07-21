@@ -16,8 +16,8 @@ public class ResultTests {
         final Object data = new Object();
         final ControllerResult<?> result = new ControllerResult<>(DataAccessResult.fromResult(data), sourceId, isFetching);
 
-        Assert.assertEquals(sourceId, result.getSourceId());
-        Assert.assertEquals(isFetching, result.isFetching());
+        Assert.assertEquals(sourceId, result.getDataSourceId());
+        Assert.assertEquals(isFetching, result.isUpdatePending());
     }
 
     @Test
