@@ -5,14 +5,13 @@ import android.os.Handler;
 import com.raizlabs.datacontroller.DCError;
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.ErrorInfo;
-import com.raizlabs.datacontroller.access.DataAccess;
-import com.raizlabs.datacontroller.imported.coreutils.Delegate;
-import com.raizlabs.datacontroller.imported.coreutils.MappableSet;
+import com.raizlabs.datacontroller.util.Delegate;
+import com.raizlabs.datacontroller.util.MappableSet;
 import com.raizlabs.datacontroller.util.ThreadingUtils;
 
 public abstract class DataController<Data> {
 
-    public static class DataSourceIds {
+    public static class AccessTypeIds {
         public static final int NONE = 0;
         public static final int MEMORY_DATA = 1000;
         public static final int DISK_DATA = 2000;
@@ -26,17 +25,17 @@ public abstract class DataController<Data> {
     private MappableSet<DataControllerListener<Data>> listeners = new MappableSet<>();
     private boolean isClosed;
 
-    private Handler resultHandler;
+    private Handler processingHandler;
 
     public boolean isClosed() {
-        synchronized (getDataLock()) {
+        synchronized (getStateLock()) {
             return isClosed;
         }
     }
     //endregion Members
 
     //region Abstract Methods
-    protected abstract ControllerResult<Data> doGet();
+    protected abstract DataControllerResult<Data> doGet();
 
     protected abstract void doFetch();
     protected abstract void doFetch(int limitId);
@@ -48,12 +47,9 @@ public abstract class DataController<Data> {
     public abstract boolean isFetching();
     //endregion Abstract Methods
 
-
-    // TODO Should this be `? extends Data` ? More flexible but makes interfaces more complicated
-
     //region Methods
-    public ControllerResult<Data> get() {
-        synchronized (getDataLock()) {
+    public DataControllerResult<Data> get() {
+        synchronized (getStateLock()) {
             if (isClosed()) {
                 processClosedError();
                 return null;
@@ -64,7 +60,7 @@ public abstract class DataController<Data> {
     }
 
     public void fetch() {
-        synchronized (getDataLock()) {
+        synchronized (getStateLock()) {
             if (isClosed()) {
                 processClosedError();
             } else if (!isFetching()) {
@@ -75,7 +71,7 @@ public abstract class DataController<Data> {
     }
 
     public void fetch(int limitId) {
-        synchronized (getDataLock()) {
+        synchronized (getStateLock()) {
             if (isClosed()) {
                 processClosedError();
             } else if (!isFetching()) {
@@ -86,13 +82,13 @@ public abstract class DataController<Data> {
     }
 
     public void importData(Data data) {
-        synchronized (getDataLock()) {
+        synchronized (getStateLock()) {
             doImportData(data);
         }
     }
 
     public void close() {
-        synchronized (getDataLock()) {
+        synchronized (getStateLock()) {
             this.isClosed = true;
             doClose();
         }
@@ -106,19 +102,19 @@ public abstract class DataController<Data> {
         listeners.remove(listener);
     }
 
-    public void setResultHandler(Handler handler) {
-        synchronized (getDataLock()) {
-            this.resultHandler = handler;
+    public void setProcessingHandler(Handler handler) {
+        synchronized (getStateLock()) {
+            this.processingHandler = handler;
         }
     }
 
-    protected Object getDataLock() {
+    protected Object getStateLock() {
         return this;
     }
 
     protected void onFetchStarted() {
-        synchronized (getDataLock()) {
-            dispatchResult(new Runnable() {
+        synchronized (getStateLock()) {
+            process(new Runnable() {
                 @Override
                 public void run() {
                     listeners.map(new Delegate<DataControllerListener<Data>>() {
@@ -133,8 +129,8 @@ public abstract class DataController<Data> {
     }
 
     protected void onFetchFinished() {
-        synchronized (getDataLock()) {
-            dispatchResult(new Runnable() {
+        synchronized (getStateLock()) {
+            process(new Runnable() {
                 @Override
                 public void run() {
                     listeners.map(new Delegate<DataControllerListener<Data>>() {
@@ -148,18 +144,18 @@ public abstract class DataController<Data> {
         }
     }
 
-    protected void processResult(final ControllerResult<Data> controllerResult) {
-        synchronized (getDataLock()) {
-            dispatchResult(new Runnable() {
+    protected void processResult(final DataControllerResult<Data> dataControllerResult) {
+        synchronized (getStateLock()) {
+            process(new Runnable() {
                 @Override
                 public void run() {
-                    if (controllerResult.getError() != null) {
-                        notifyError(controllerResult);
+                    if (dataControllerResult.getError() != null) {
+                        notifyError(dataControllerResult);
                     } else {
-                        notifyDataFetched(controllerResult);
+                        notifyDataFetched(dataControllerResult);
                     }
 
-                    if (!controllerResult.isUpdatePending()) {
+                    if (!dataControllerResult.isFetching()) {
                         onFetchFinished();
                     }
                 }
@@ -191,8 +187,8 @@ public abstract class DataController<Data> {
 
 
     private void processClosedError() {
-        synchronized (getDataLock()) {
-            dispatchResult(new Runnable() {
+        synchronized (getStateLock()) {
+            process(new Runnable() {
                 @Override
                 public void run() {
                     notifyError(new ClosedErrorInfo(isFetching()));
@@ -201,9 +197,9 @@ public abstract class DataController<Data> {
         }
     }
 
-    private void dispatchResult(Runnable runnable) {
-        if (resultHandler != null) {
-            ThreadingUtils.runOnHandler(resultHandler, runnable);
+    private void process(Runnable runnable) {
+        if (processingHandler != null) {
+            ThreadingUtils.runOnHandler(processingHandler, runnable);
         } else {
             runnable.run();
         }
@@ -223,12 +219,12 @@ public abstract class DataController<Data> {
         }
 
         @Override
-        public int getDataSourceId() {
-            return ErrorInfo.ACCESS_TYPE_NONE;
+        public int getAccessTypeId() {
+            return AccessTypeIds.NONE;
         }
 
         @Override
-        public boolean isUpdatePending() {
+        public boolean isFetching() {
             return isFetching;
         }
     }

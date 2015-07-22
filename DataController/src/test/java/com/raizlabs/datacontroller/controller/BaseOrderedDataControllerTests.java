@@ -55,9 +55,9 @@ public abstract class BaseOrderedDataControllerTests {
     public void testSynchronousAccess() {
         // Tests that modifying the data through the access functions
         final String key = "test";
-        final int sourceId = 75;
+        final int typeId = 75;
         final Object value = new Object();
-        final KeyedMemoryDataAccess<Object> dataAccess = new KeyedMemoryDataAccess<>(key, sourceId, getDataManager());
+        final KeyedMemoryDataAccess<Object> dataAccess = new KeyedMemoryDataAccess<>(key, typeId, getDataManager());
         final DataController<Object> dataController =
                 createNewBuilder()
                         .setSynchronousAccess(dataAccess)
@@ -69,8 +69,8 @@ public abstract class BaseOrderedDataControllerTests {
         // Import our value and make sure it comes back with the right value and the metadata of the access we created
         dataAccess.importData(value);
 
-        ControllerResult<Object> result = dataController.get();
-        Assert.assertEquals(sourceId, result.getDataSourceId());
+        DataControllerResult<Object> result = dataController.get();
+        Assert.assertEquals(typeId, result.getAccessTypeId());
         ControllerAssertions.assertDataEquals(value, result);
 
         // Ensure clearing functions properly
@@ -82,9 +82,9 @@ public abstract class BaseOrderedDataControllerTests {
     public void testSynchronousController() {
         // Tests that modifying the data through the controller functions
         final String key = "test";
-        final int sourceId = 75;
+        final int typeId = 75;
         final Object value = new Object();
-        final KeyedMemoryDataAccess<Object> dataAccess = new KeyedMemoryDataAccess<>(key, sourceId, getDataManager());
+        final KeyedMemoryDataAccess<Object> dataAccess = new KeyedMemoryDataAccess<>(key, typeId, getDataManager());
         final DataController<Object> dataController =
                 createNewBuilder()
                         .setSynchronousAccess(dataAccess)
@@ -96,8 +96,8 @@ public abstract class BaseOrderedDataControllerTests {
         // Import our value and make sure it comes back with the right value and the metadata of the access we created
         dataController.importData(value);
 
-        ControllerResult<Object> result = dataController.get();
-        Assert.assertEquals(sourceId, result.getDataSourceId());
+        DataControllerResult<Object> result = dataController.get();
+        Assert.assertEquals(typeId, result.getAccessTypeId());
         ControllerAssertions.assertDataEquals(value, result);
     }
 
@@ -284,7 +284,7 @@ public abstract class BaseOrderedDataControllerTests {
             }
         });
 
-        dataController.fetch(memoryAccess.getSourceId());
+        dataController.fetch(memoryAccess.getTypeId());
         Assert.assertTrue(memoryAccess.wasQueried());
         Assert.assertFalse(firstAccess.getCompletionLock().isUnlocked());
         Assert.assertFalse(secondAccess.getCompletionLock().isUnlocked());
@@ -297,7 +297,7 @@ public abstract class BaseOrderedDataControllerTests {
         secondAccess.reset();
         thirdAccess.reset();
 
-        dataController.fetch(firstAccess.getSourceId());
+        dataController.fetch(firstAccess.getTypeId());
         Assert.assertTrue(memoryAccess.wasQueried());
         Assert.assertTrue(firstAccess.getCompletionLock().isUnlocked());
         Assert.assertFalse(secondAccess.getCompletionLock().isUnlocked());
@@ -310,7 +310,7 @@ public abstract class BaseOrderedDataControllerTests {
         secondAccess.reset();
         thirdAccess.reset();
 
-        dataController.fetch(secondAccess.getSourceId());
+        dataController.fetch(secondAccess.getTypeId());
         Assert.assertTrue(memoryAccess.wasQueried());
         Assert.assertTrue(firstAccess.getCompletionLock().isUnlocked());
         Assert.assertTrue(secondAccess.getCompletionLock().isUnlocked());
@@ -323,7 +323,7 @@ public abstract class BaseOrderedDataControllerTests {
         secondAccess.reset();
         thirdAccess.reset();
 
-        dataController.fetch(thirdAccess.getSourceId());
+        dataController.fetch(thirdAccess.getTypeId());
         Assert.assertTrue(memoryAccess.wasQueried());
         Assert.assertTrue(firstAccess.getCompletionLock().isUnlocked());
         Assert.assertTrue(secondAccess.getCompletionLock().isUnlocked());

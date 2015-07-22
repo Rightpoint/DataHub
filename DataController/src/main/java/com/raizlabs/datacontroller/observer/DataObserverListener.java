@@ -1,9 +1,9 @@
-package com.raizlabs.datacontroller.source;
+package com.raizlabs.datacontroller.observer;
 
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.ErrorInfo;
 
-public interface DataSourceListener<Data> {
+public interface DataObserverListener<Data> {
 
     /**
      * Called when data fetching has begun, before any other callbacks are called.

@@ -4,6 +4,18 @@ import com.raizlabs.datacontroller.DCError;
 
 public class DataAccessResult<Data> {
 
+    public static <T> DataAccessResult<T> fromResult(T data) {
+        return new DataAccessResult<>(data);
+    }
+
+    public static <T> DataAccessResult<T> fromUnavailable() {
+        return fromResult(null);
+    }
+
+    public static <T> DataAccessResult<T> fromError(DCError error) {
+        return new DataAccessResult<>(error);
+    }
+
     private DCError error;
     private Data data;
 
@@ -23,19 +35,7 @@ public class DataAccessResult<Data> {
         return data;
     }
 
-    public boolean hasValidData() {
+    public boolean hasData() {
         return (getError() == null) && (getData() != null);
-    }
-
-    public static <T> DataAccessResult<T> fromResult(T data) {
-        return new DataAccessResult<>(data);
-    }
-
-    public static <T> DataAccessResult<T> fromUnavailable() {
-        return fromResult(null);
-    }
-
-    public static <T> DataAccessResult<T> fromError(DCError error) {
-        return new DataAccessResult<>(error);
     }
 }

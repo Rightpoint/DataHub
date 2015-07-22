@@ -2,11 +2,9 @@ package com.raizlabs.datacontroller;
 
 public interface ErrorInfo {
 
-    public static final int ACCESS_TYPE_NONE = -1;
+    DCError getError();
 
-    public DCError getError();
+    int getAccessTypeId();
 
-    public int getDataSourceId();
-
-    public boolean isUpdatePending();
+    boolean isFetching();
 }

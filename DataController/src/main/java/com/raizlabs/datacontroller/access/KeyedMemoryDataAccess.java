@@ -6,27 +6,27 @@ import com.raizlabs.datacontroller.controller.DataController;
 public class KeyedMemoryDataAccess<Data> implements SynchronousDataAccess<Data> {
 
     private final Object key;
-    private final int sourceId;
+    private final int typeId;
     private final KeyedDataManager<?, ? super Data> dataManager;
-    private final ManagerHelper<?, Data> managerHelper;
+    private final ValueAccessHelper<?, Data> valueAccessHelper;
 
     public KeyedMemoryDataAccess(Object key) {
-        this(key, DataController.DataSourceIds.MEMORY_DATA);
+        this(key, DataController.AccessTypeIds.MEMORY_DATA);
     }
 
-    public KeyedMemoryDataAccess(Object key, int sourceId) {
-        this(key, sourceId, MemoryDataManager.getGlobalInstance());
+    public KeyedMemoryDataAccess(Object key, int typeId) {
+        this(key, typeId, MemoryDataManager.getGlobalInstance());
     }
 
     public <K, M extends KeyedDataManager<K, ? super Data>> KeyedMemoryDataAccess(K key, M manager) {
-        this(key, DataController.DataSourceIds.MEMORY_DATA, manager);
+        this(key, DataController.AccessTypeIds.MEMORY_DATA, manager);
     }
 
-    public <K, M extends KeyedDataManager<K, ? super Data>> KeyedMemoryDataAccess(K key, int sourceId, M manager) {
+    public <K, M extends KeyedDataManager<K, ? super Data>> KeyedMemoryDataAccess(K key, int typeId, M manager) {
         this.key = key;
-        this.sourceId = sourceId;
+        this.typeId = typeId;
         this.dataManager = manager;
-        this.managerHelper = new ManagerHelper<>(key, manager);
+        this.valueAccessHelper = new ValueAccessHelper<>(key, manager);
     }
 
     public Object getKey() {
@@ -39,12 +39,12 @@ public class KeyedMemoryDataAccess<Data> implements SynchronousDataAccess<Data> 
 
     @Override
     public DataAccessResult<Data> get() {
-        return managerHelper.getResult();
+        return valueAccessHelper.getResult();
     }
 
     @Override
     public void importData(Data data) {
-        managerHelper.set(data);
+        valueAccessHelper.set(data);
     }
 
     @Override
@@ -53,19 +53,19 @@ public class KeyedMemoryDataAccess<Data> implements SynchronousDataAccess<Data> 
     }
 
     @Override
-    public int getSourceId() {
-        return sourceId;
+    public int getTypeId() {
+        return typeId;
     }
 
     public void clear() {
-        managerHelper.clear();
+        valueAccessHelper.clear();
     }
 
-    private static class ManagerHelper<K, V> {
+    private static class ValueAccessHelper<K, V> {
         private K key;
         private KeyedDataManager<K, ? super V> manager;
 
-        public ManagerHelper(K key, KeyedDataManager<K, ? super V> manager) {
+        public ValueAccessHelper(K key, KeyedDataManager<K, ? super V> manager) {
             this.key = key;
             this.manager = manager;
         }

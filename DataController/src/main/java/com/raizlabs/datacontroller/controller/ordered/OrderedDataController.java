@@ -5,7 +5,7 @@ import com.raizlabs.datacontroller.access.DataAccessResult;
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.access.AsynchronousDataAccess;
 import com.raizlabs.datacontroller.access.SynchronousDataAccess;
-import com.raizlabs.datacontroller.controller.ControllerResult;
+import com.raizlabs.datacontroller.controller.DataControllerResult;
 import com.raizlabs.datacontroller.controller.DataController;
 
 import java.util.ArrayList;
@@ -110,10 +110,10 @@ public class OrderedDataController<Data> extends DataController<Data> {
     }
 
     @Override
-    public ControllerResult<Data> doGet() {
+    public DataControllerResult<Data> doGet() {
         if (syncDataAccess != null) {
             DataAccessResult<Data> accessResult = syncDataAccess.get();
-            return new ControllerResult<>(accessResult, syncDataAccess.getSourceId(), isFetching());
+            return new DataControllerResult<>(accessResult, syncDataAccess.getTypeId(), isFetching());
         }
 
         return null;
@@ -170,8 +170,8 @@ public class OrderedDataController<Data> extends DataController<Data> {
             }
 
             for (AsynchronousDataAccess<Data> access : asyncDataAccesses) {
-                // Stop when we hit the same source
-                if (access.getSourceId() == dataResult.getDataSourceId()) {
+                // Stop when we hit the same access type
+                if (access.getTypeId() == dataResult.getAccessTypeId()) {
                     break;
                 }
                 access.importData(data);
@@ -184,10 +184,10 @@ public class OrderedDataController<Data> extends DataController<Data> {
     }
 
     protected void processResult(DataAccessResult<Data> data, DataAccess access) {
-        synchronized (getDataLock()) {
+        synchronized (getStateLock()) {
             if (!isClosed()) {
-                int accessId = (access != null) ? access.getSourceId() : DataSourceIds.NONE;
-                ControllerResult<Data> result = new ControllerResult<>(data, accessId, isFetching());
+                int accessId = (access != null) ? access.getTypeId() : AccessTypeIds.NONE;
+                DataControllerResult<Data> result = new DataControllerResult<>(data, accessId, isFetching());
                 processResult(result);
             }
         }

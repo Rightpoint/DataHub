@@ -1,4 +1,4 @@
-package com.raizlabs.datacontroller.source;
+package com.raizlabs.datacontroller.observer;
 
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.ErrorInfo;
@@ -16,7 +16,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-public class DataSourceTests {
+public class DataObserverTests {
 
     @Test
     public void testFullCycle() {
@@ -30,7 +30,7 @@ public class DataSourceTests {
                         .addAsynchronousAccess(new ImmediateResponseAsyncAccess<>(secondResult, 20))
                         .build();
 
-        final DataSource<Object> source = new DataSource<>(controller, null);
+        final DataObserver<Object> observer = new DataObserver<>(controller, null);
 
         final Wrapper<Boolean> fetchStartedCalled = new Wrapper<>(false);
         final Wrapper<Boolean> dataReceivedCalled = new Wrapper<>(false);
@@ -39,7 +39,7 @@ public class DataSourceTests {
 
         final OneShotLock fetchFinishedLock = new OneShotLock();
 
-        source.addListener(new DataSourceListener<Object>() {
+        observer.addListener(new DataObserverListener<Object>() {
             @Override
             public void onDataFetchStarted() {
                 fetchStartedCalled.set(true);
@@ -67,7 +67,7 @@ public class DataSourceTests {
         Assert.assertFalse(fetchFinishedCalled.get());
         Assert.assertFalse(errorReceivedCalled.get());
 
-        source.fetch();
+        observer.fetch();
         fetchFinishedLock.waitUntilUnlocked();
 
         Assert.assertTrue(fetchStartedCalled.get());
@@ -95,12 +95,12 @@ public class DataSourceTests {
 
         controller.isClosed();
 
-        final DataSource<Object> source = new DataSource<Object>(controller, null);
+        final DataObserver<Object> observer = new DataObserver<>(controller, null);
 
         final Wrapper<Boolean> fetchStartedCalled = new Wrapper<>(false);
         final Wrapper<Boolean> dataReceivedCalled = new Wrapper<>(false);
 
-        DataSourceListener<Object> listener = new DataSourceListener<Object>() {
+        DataObserverListener<Object> listener = new DataObserverListener<Object>() {
             @Override
             public void onDataFetchStarted() {
                 fetchStartedCalled.set(true);
@@ -122,13 +122,13 @@ public class DataSourceTests {
             }
         };
 
-        source.fetch();
+        observer.fetch();
         firstAccess.getCompletionLock().waitUntilUnlocked();
 
         Assert.assertFalse(fetchStartedCalled.get());
         Assert.assertFalse(dataReceivedCalled.get());
 
-        source.addListener(listener);
+        observer.addListener(listener);
 
         Assert.assertTrue(fetchStartedCalled.get());
         Assert.assertTrue(dataReceivedCalled.get());
@@ -137,11 +137,11 @@ public class DataSourceTests {
     @Test
     public void testClose() {
         DataController<Object> dataController = OrderedDataController.Builder.newParallel().build();
-        DataSource<Object> dataSource = new DataSource<>(dataController, null);
+        DataObserver<Object> dataObserver = new DataObserver<>(dataController, null);
 
         final Wrapper<Boolean> fetchStartedCalled = new Wrapper<>(false);
         final Wrapper<Boolean> dataReceivedCalled = new Wrapper<>(false);
-        final DataSourceListener<Object> listener = new DataSourceListener<Object>() {
+        final DataObserverListener<Object> listener = new DataObserverListener<Object>() {
             @Override
             public void onDataFetchStarted() {
                 fetchStartedCalled.set(true);
@@ -165,26 +165,26 @@ public class DataSourceTests {
 
         Assert.assertFalse(dataController.isClosed());
 
-        // Shallow-close the data source and make sure the data controller is unaffected
-        dataSource.close(false);
+        // Shallow-close the data observer and make sure the data controller is unaffected
+        dataObserver.close(false);
 
         Assert.assertFalse(dataController.isClosed());
 
         // Make sure our listener isn't triggered
-        dataSource.addListener(listener);
+        dataObserver.addListener(listener);
 
         Assert.assertFalse(fetchStartedCalled.get());
         Assert.assertFalse(dataReceivedCalled.get());
 
-        dataSource.fetch();
+        dataObserver.fetch();
 
         Assert.assertFalse(fetchStartedCalled.get());
         Assert.assertFalse(dataReceivedCalled.get());
 
 
         // Do a full close and make sure the controller closes
-        dataSource = new DataSource<>(dataController, null);
-        dataSource.close(true);
+        dataObserver = new DataObserver<>(dataController, null);
+        dataObserver.close(true);
 
         Assert.assertTrue(dataController.isClosed());
 

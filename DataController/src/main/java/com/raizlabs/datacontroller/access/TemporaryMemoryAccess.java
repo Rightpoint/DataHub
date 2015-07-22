@@ -6,14 +6,14 @@ public class TemporaryMemoryAccess<Data> implements SynchronousDataAccess<Data> 
 
     private Data value;
     private boolean imported = false;
-    private final int sourceId;
+    private final int typeId;
 
     public TemporaryMemoryAccess() {
-        this(DataController.DataSourceIds.MEMORY_DATA);
+        this(DataController.AccessTypeIds.MEMORY_DATA);
     }
 
-    public TemporaryMemoryAccess(int sourceId) {
-        this.sourceId = sourceId;
+    public TemporaryMemoryAccess(int typeId) {
+        this.typeId = typeId;
     }
 
     @Override
@@ -37,8 +37,8 @@ public class TemporaryMemoryAccess<Data> implements SynchronousDataAccess<Data> 
     }
 
     @Override
-    public int getSourceId() {
-        return sourceId;
+    public int getTypeId() {
+        return typeId;
     }
 
     public synchronized void clear() {

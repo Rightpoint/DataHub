@@ -5,16 +5,15 @@ import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.ErrorInfo;
 import com.raizlabs.datacontroller.access.DataAccessResult;
 
-// TODO - Casting this to DataResult hides errors and looks like "unavailable"... Is it OK to accept this risk?
-public class ControllerResult<Data> implements DataResult<Data>, ErrorInfo {
+public class DataControllerResult<Data> implements DataResult<Data>, ErrorInfo {
 
     private DataAccessResult<Data> accessResult;
-    private int sourceId;
+    private int typeId;
     private boolean isFetching;
 
-    public ControllerResult(DataAccessResult<Data> accessResult, int sourceId, boolean isFetching) {
+    public DataControllerResult(DataAccessResult<Data> accessResult, int typeId, boolean isFetching) {
         this.accessResult = accessResult;
-        this.sourceId = sourceId;
+        this.typeId = typeId;
         this.isFetching = isFetching;
     }
 
@@ -24,12 +23,12 @@ public class ControllerResult<Data> implements DataResult<Data>, ErrorInfo {
     }
 
     @Override
-    public int getDataSourceId() {
-        return sourceId;
+    public int getAccessTypeId() {
+        return typeId;
     }
 
     @Override
-    public boolean isUpdatePending() {
+    public boolean isFetching() {
         return isFetching;
     }
 
@@ -38,8 +37,8 @@ public class ControllerResult<Data> implements DataResult<Data>, ErrorInfo {
         return accessResult.getError();
     }
 
-    public boolean hasValidData() {
-        return accessResult.hasValidData();
+    public boolean hasData() {
+        return accessResult.hasData();
     }
 
     public DataAccessResult<Data> getAccessResult() {

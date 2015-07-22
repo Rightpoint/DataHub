@@ -1,4 +1,4 @@
-package com.raizlabs.datacontroller.imported.coreutils;
+package com.raizlabs.datacontroller.util;
 
 /**
  * A class which contains a set of items and can perform an actions across all

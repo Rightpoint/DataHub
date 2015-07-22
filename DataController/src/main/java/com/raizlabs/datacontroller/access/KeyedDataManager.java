@@ -2,17 +2,17 @@ package com.raizlabs.datacontroller.access;
 
 public interface KeyedDataManager<K, V> {
 
-    public boolean containsKey(K key);
+    boolean containsKey(K key);
 
-    public <T> T get(K key);
+    <T> T get(K key);
 
-    public void set(K key, V value);
+    void set(K key, V value);
 
-    public void remove(K key);
+    void remove(K key);
 
-    public void clear();
+    void clear();
 
-    public <T extends V> KeyedMemoryDataAccess<T> createDataAccess(K key);
+    <T extends V> KeyedMemoryDataAccess<T> createDataAccess(K key);
 
-    public <T extends V> KeyedMemoryDataAccess<T> createDataAccess(K key, int sourceId);
+    <T extends V> KeyedMemoryDataAccess<T> createDataAccess(K key, int typeId);
 }

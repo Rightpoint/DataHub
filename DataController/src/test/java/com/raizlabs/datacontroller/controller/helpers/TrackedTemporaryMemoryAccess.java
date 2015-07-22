@@ -12,8 +12,8 @@ public class TrackedTemporaryMemoryAccess<Data> extends TemporaryMemoryAccess<Da
         super();
     }
 
-    public TrackedTemporaryMemoryAccess(int sourceId) {
-        super(sourceId);
+    public TrackedTemporaryMemoryAccess(int typeId) {
+        super(typeId);
     }
 
     @Override

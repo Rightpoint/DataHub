@@ -1,4 +1,4 @@
-package com.raizlabs.datacontroller.imported.coreutils;
+package com.raizlabs.datacontroller.util;
 
 import java.util.Collection;
 import java.util.HashSet;

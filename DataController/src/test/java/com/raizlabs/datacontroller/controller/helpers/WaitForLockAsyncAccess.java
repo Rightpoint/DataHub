@@ -11,12 +11,12 @@ public class WaitForLockAsyncAccess<T> implements AsynchronousDataAccess<T> {
     private final DataAccessResult<T> result;
     private final OneShotLock startLock;
 
-    private final int sourceId;
+    private final int typeId;
 
-    public WaitForLockAsyncAccess(DataAccessResult<T> result, OneShotLock lock, int sourceId) {
+    public WaitForLockAsyncAccess(DataAccessResult<T> result, OneShotLock lock, int typeId) {
         this.result = result;
         this.startLock = lock;
-        this.sourceId = sourceId;
+        this.typeId = typeId;
     }
 
     @Override
@@ -42,8 +42,8 @@ public class WaitForLockAsyncAccess<T> implements AsynchronousDataAccess<T> {
     }
 
     @Override
-    public int getSourceId() {
-        return sourceId;
+    public int getTypeId() {
+        return typeId;
     }
 
     public OneShotLock getCompletionLock() {

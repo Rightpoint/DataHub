@@ -7,7 +7,7 @@ public class AccessAssertions {
     public static void assertDataUnavailable(DataAccessResult<?> result) {
         Assert.assertNull(result.getData());
         Assert.assertNull(result.getError());
-        Assert.assertFalse(result.hasValidData());
+        Assert.assertFalse(result.hasData());
     }
 
     public static void assertDataUnavailable(SynchronousDataAccess<?> access) {
@@ -17,7 +17,7 @@ public class AccessAssertions {
     public static void assertDataNotNull(DataAccessResult<?> result) {
         Assert.assertNotNull(result.getData());
         Assert.assertNull(result.getError());
-        Assert.assertTrue(result.hasValidData());
+        Assert.assertTrue(result.hasData());
     }
 
     public static void assertDataNotNull(SynchronousDataAccess<?> access) {
@@ -27,7 +27,7 @@ public class AccessAssertions {
     public static void assertDataEquals(Object expectedData, DataAccessResult<?> result) {
         Assert.assertEquals(expectedData, result.getData());
         Assert.assertNull(result.getError());
-        Assert.assertTrue(result.hasValidData());
+        Assert.assertTrue(result.hasData());
     }
 
     public static void assertDataEquals(Object expectedData, SynchronousDataAccess<?> access) {
@@ -37,7 +37,7 @@ public class AccessAssertions {
     public static void assertIsError(DataAccessResult<?> result) {
         Assert.assertNull(result.getData());
         Assert.assertNotNull(result.getError());
-        Assert.assertFalse(result.hasValidData());
+        Assert.assertFalse(result.hasData());
     }
 
     public static void assertIsError(SynchronousDataAccess<?> access) {

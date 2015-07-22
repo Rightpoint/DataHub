@@ -1,4 +1,4 @@
-package com.raizlabs.datacontroller.imported.coreutils;
+package com.raizlabs.datacontroller.util;
 
 /**
  * Interface for a delegate which can be executed on given parameters.

@@ -11,32 +11,32 @@ public class ResultTests {
 
     @Test
     public void testProperties() {
-        final int sourceId = 290;
+        final int typeId = 290;
         final boolean isFetching = false;
         final Object data = new Object();
-        final ControllerResult<?> result = new ControllerResult<>(DataAccessResult.fromResult(data), sourceId, isFetching);
+        final DataControllerResult<?> result = new DataControllerResult<>(DataAccessResult.fromResult(data), typeId, isFetching);
 
-        Assert.assertEquals(sourceId, result.getDataSourceId());
-        Assert.assertEquals(isFetching, result.isUpdatePending());
+        Assert.assertEquals(typeId, result.getAccessTypeId());
+        Assert.assertEquals(isFetching, result.isFetching());
     }
 
     @Test
     public void testUnavailable() {
-        final ControllerResult<?> result = new ControllerResult<>(DataAccessResult.fromUnavailable(), 0, false);
+        final DataControllerResult<?> result = new DataControllerResult<>(DataAccessResult.fromUnavailable(), 0, false);
         ControllerAssertions.assertDataUnavailable(result);
     }
 
     @Test
     public void testResult() {
         final Object data = new Object();
-        final ControllerResult<?> result = new ControllerResult<>(DataAccessResult.fromResult(data), 0, false);
+        final DataControllerResult<?> result = new DataControllerResult<>(DataAccessResult.fromResult(data), 0, false);
         ControllerAssertions.assertDataEquals(data, result);
     }
 
     @Test
     public void testError() {
         final DCError error = new DCError("", DCError.Types.INVALID_STATE);
-        final ControllerResult<?> result = new ControllerResult<>(DataAccessResult.fromError(error), 0, false);
+        final DataControllerResult<?> result = new DataControllerResult<>(DataAccessResult.fromError(error), 0, false);
         ControllerAssertions.assertIsError(result);
     }
 }

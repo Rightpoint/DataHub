@@ -17,7 +17,7 @@ public class FetchStrategies {
                 if (index > getLastAccessIndex()) {
                     setLastAccessIndex(index);
                     // If this was the last one, finish everything
-                    if ((access.getSourceId() == getFetchLimitId()) ||
+                    if ((access.getTypeId() == getFetchLimitId()) ||
                             (index >= getAsyncDataAccesses().size() - 1)) {
                         close();
                     }
@@ -35,7 +35,7 @@ public class FetchStrategies {
                 DataAccessResult<T> syncResult = syncAccess.get();
 
                 // If the id matches the limit, we're done
-                if (syncAccess.getSourceId() == limitId) {
+                if (syncAccess.getTypeId() == limitId) {
                     close();
                 }
 
@@ -51,7 +51,7 @@ public class FetchStrategies {
                 for (AsynchronousDataAccess<T> access : getAsyncDataAccesses()) {
                     access.get(getCurrentCallback());
 
-                    if (access.getSourceId() == limitId) {
+                    if (access.getTypeId() == limitId) {
                         break;
                     }
                 }
@@ -78,7 +78,7 @@ public class FetchStrategies {
 
                 // If this is the last access, last access allowed by the limit, or the validator says it's done, terminate
                 if ((index >= getAsyncDataAccesses().size() - 1) ||
-                        (access.getSourceId() == getFetchLimitId()) ||
+                        (access.getTypeId() == getFetchLimitId()) ||
                         dataValidator.isFinal(result, access)) {
                     close();
                 }
@@ -102,7 +102,7 @@ public class FetchStrategies {
                 DataAccessResult<T> syncResult = syncAccess.get();
 
                 // If the id matches the limit, or the validator marks it as final, we're done
-                if ((syncAccess.getSourceId() == limitId) || dataValidator.isFinal(syncResult, syncAccess)) {
+                if ((syncAccess.getTypeId() == limitId) || dataValidator.isFinal(syncResult, syncAccess)) {
                     close();
                 }
 
@@ -141,7 +141,7 @@ public class FetchStrategies {
                 return new DataValidator<T>() {
                     @Override
                     public boolean isFinal(DataAccessResult<T> result, DataAccess access) {
-                        return result.hasValidData();
+                        return result.hasData();
                     }
                 };
             }

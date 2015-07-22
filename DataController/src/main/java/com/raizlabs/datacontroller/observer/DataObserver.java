@@ -1,55 +1,55 @@
-package com.raizlabs.datacontroller.source;
+package com.raizlabs.datacontroller.observer;
 
 import android.os.Handler;
 
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.ErrorInfo;
-import com.raizlabs.datacontroller.controller.ControllerResult;
 import com.raizlabs.datacontroller.controller.DataController;
 import com.raizlabs.datacontroller.controller.DataControllerListener;
-import com.raizlabs.datacontroller.imported.coreutils.Delegate;
-import com.raizlabs.datacontroller.imported.coreutils.MappableSet;
+import com.raizlabs.datacontroller.controller.DataControllerResult;
+import com.raizlabs.datacontroller.util.Delegate;
+import com.raizlabs.datacontroller.util.MappableSet;
 import com.raizlabs.datacontroller.util.ThreadingUtils;
 
-public class DataSource<Data> {
+public class DataObserver<Data> {
 
     private DataController<Data> dataController;
 
-    private MappableSet<DataSourceListener<Data>> listeners;
+    private MappableSet<DataObserverListener<Data>> listeners;
 
-    private Handler handler;
+    private Handler listenerHandler;
 
     /**
-     * Constructs a {@link DataSource} which accesses data from the given controller. All update callbacks will be
+     * Constructs a {@link DataObserver} which accesses data from the given controller. All update callbacks will be
      * dispatched on the UI thread.
      *
      * @param dataController The controller to access data from.
      */
-    public DataSource(DataController<Data> dataController) {
+    public DataObserver(DataController<Data> dataController) {
         this(dataController, ThreadingUtils.getUIHandler());
     }
 
     /**
-     * Constructs a {@link DataSource} which accesses data from the given controller and dispatches all update callbacks
+     * Constructs a {@link DataObserver} which accesses data from the given controller and dispatches all update callbacks
      * via the given {@link Handler}.
      *
-     * @param dataController The controller to access data from.
-     * @param handler        The handler to dispatch future callbacks to, or null to dispatch them straight from the
-     *                       threads the {@link com.raizlabs.datacontroller.controller.DataController} is calling from.
+     * @param dataController  The controller to access data from.
+     * @param listenerHandler The Handler to dispatch future callbacks to, or null to dispatch them straight from the
+     *                        threads the {@link com.raizlabs.datacontroller.controller.DataController} is calling from.
      */
-    public DataSource(DataController<Data> dataController, Handler handler) {
+    public DataObserver(DataController<Data> dataController, Handler listenerHandler) {
         this.dataController = dataController;
-        this.handler = handler;
+        this.listenerHandler = listenerHandler;
         this.listeners = new MappableSet<>();
 
         this.dataController.addListener(dataControllerListener);
     }
 
-    public void addListener(final DataSourceListener<Data> listener) {
-        dispatchResult(new Runnable() {
+    public void addListener(final DataObserverListener<Data> listener) {
+        dispatch(new Runnable() {
             @Override
             public void run() {
-                synchronized (getStatusLock()) {
+                synchronized (getStateLock()) {
                     if (!listeners.contains(listener)) {
                         listeners.add(listener);
                         initializeListener(listener);
@@ -57,14 +57,13 @@ public class DataSource<Data> {
                 }
             }
         });
-
     }
 
-    public boolean removeListener(DataSourceListener<Data> listener) {
+    public boolean removeListener(DataObserverListener<Data> listener) {
         return listeners.remove(listener);
     }
 
-    public ControllerResult<Data> get() {
+    public DataControllerResult<Data> get() {
         if (dataController != null) {
             return dataController.get();
         } else {
@@ -85,7 +84,7 @@ public class DataSource<Data> {
     }
 
     /**
-     * Indicates that this {@link DataSource} will no longer be used and should clean up any resources associated with
+     * Indicates that this {@link DataObserver} will no longer be used and should clean up any resources associated with
      * it.
      *
      * @param completeShutdown If set to <code>true</code> all the attached listeners to the {@link DataController} will
@@ -109,7 +108,7 @@ public class DataSource<Data> {
         }
     }
 
-    protected Object getStatusLock() {
+    protected Object getStateLock() {
         return this;
     }
 
@@ -117,14 +116,14 @@ public class DataSource<Data> {
      * Called to dispatch fetching start indication via the delegate.
      */
     protected void onDataFetchStarted() {
-        dispatchResult(new Runnable() {
+        dispatch(new Runnable() {
             @Override
             public void run() {
-                synchronized (getStatusLock()) {
-                    listeners.map(new Delegate<DataSourceListener<Data>>() {
+                synchronized (getStateLock()) {
+                    listeners.map(new Delegate<DataObserverListener<Data>>() {
                         @Override
-                        public void execute(DataSourceListener<Data> dataDataSourceListener) {
-                            dataDataSourceListener.onDataFetchStarted();
+                        public void execute(DataObserverListener<Data> dataDataObserverListener) {
+                            dataDataObserverListener.onDataFetchStarted();
                         }
                     });
                 }
@@ -133,14 +132,14 @@ public class DataSource<Data> {
     }
 
     protected void onDataFetchFinished() {
-        dispatchResult(new Runnable() {
+        dispatch(new Runnable() {
             @Override
             public void run() {
-                synchronized (getStatusLock()) {
-                    listeners.map(new Delegate<DataSourceListener<Data>>() {
+                synchronized (getStateLock()) {
+                    listeners.map(new Delegate<DataObserverListener<Data>>() {
                         @Override
-                        public void execute(DataSourceListener<Data> dataDataSourceListener) {
-                            dataDataSourceListener.onDataFetchFinished();
+                        public void execute(DataObserverListener<Data> dataDataObserverListener) {
+                            dataDataObserverListener.onDataFetchFinished();
                         }
                     });
                 }
@@ -152,14 +151,14 @@ public class DataSource<Data> {
      * Called to dispatch loading the data via the delegate.
      */
     protected void onDataReceived(final DataResult<Data> dataResult) {
-        dispatchResult(new Runnable() {
+        dispatch(new Runnable() {
             @Override
             public void run() {
-                synchronized (getStatusLock()) {
-                    listeners.map(new Delegate<DataSourceListener<Data>>() {
+                synchronized (getStateLock()) {
+                    listeners.map(new Delegate<DataObserverListener<Data>>() {
                         @Override
-                        public void execute(DataSourceListener<Data> dataDataSourceListener) {
-                            dataDataSourceListener.onDataReceived(dataResult);
+                        public void execute(DataObserverListener<Data> dataDataObserverListener) {
+                            dataDataObserverListener.onDataReceived(dataResult);
                         }
                     });
                 }
@@ -171,14 +170,14 @@ public class DataSource<Data> {
      * Called to dispatch showing an error via the delegate.
      */
     protected void onErrorReceived(final ErrorInfo errorInfo) {
-        dispatchResult(new Runnable() {
+        dispatch(new Runnable() {
             @Override
             public void run() {
-                synchronized (getStatusLock()) {
-                    listeners.map(new Delegate<DataSourceListener<Data>>() {
+                synchronized (getStateLock()) {
+                    listeners.map(new Delegate<DataObserverListener<Data>>() {
                         @Override
-                        public void execute(DataSourceListener<Data> dataDataSourceListener) {
-                            dataDataSourceListener.onErrorReceived(errorInfo);
+                        public void execute(DataObserverListener<Data> dataDataObserverListener) {
+                            dataDataObserverListener.onErrorReceived(errorInfo);
                         }
                     });
                 }
@@ -186,8 +185,8 @@ public class DataSource<Data> {
         });
     }
 
-    protected void initializeListener(final DataSourceListener<Data> listener) {
-        dispatchResult(new Runnable() {
+    protected void initializeListener(final DataObserverListener<Data> listener) {
+        dispatch(new Runnable() {
             @Override
             public void run() {
                 doInitializeListener(listener);
@@ -195,25 +194,25 @@ public class DataSource<Data> {
         });
     }
 
-    private void doInitializeListener(DataSourceListener<Data> listener) {
-        synchronized (getStatusLock()) {
+    private void doInitializeListener(DataObserverListener<Data> listener) {
+        synchronized (getStateLock()) {
             if ((dataController != null) && dataController.isFetching()) {
                 listener.onDataFetchStarted();
 
-                ControllerResult<Data> currentControllerResult = dataController.get();
-                if (currentControllerResult.getError() != null) {
-                    listener.onErrorReceived(currentControllerResult);
+                DataControllerResult<Data> currentDataControllerResult = dataController.get();
+                if (currentDataControllerResult.getError() != null) {
+                    listener.onErrorReceived(currentDataControllerResult);
                 } else {
-                    listener.onDataReceived(currentControllerResult);
+                    listener.onDataReceived(currentDataControllerResult);
                 }
             }
         }
     }
 
-    protected void dispatchResult(Runnable runnable) {
-        synchronized (getStatusLock()) {
-            if (handler != null) {
-                ThreadingUtils.runOnHandler(handler, runnable);
+    protected void dispatch(Runnable runnable) {
+        synchronized (getStateLock()) {
+            if (listenerHandler != null) {
+                ThreadingUtils.runOnHandler(listenerHandler, runnable);
             } else {
                 runnable.run();
             }
@@ -223,22 +222,22 @@ public class DataSource<Data> {
     private DataControllerListener<Data> dataControllerListener = new DataControllerListener<Data>() {
         @Override
         public void onDataFetchStarted() {
-            DataSource.this.onDataFetchStarted();
+            DataObserver.this.onDataFetchStarted();
         }
 
         @Override
         public void onDataFetchFinished() {
-            DataSource.this.onDataFetchFinished();
+            DataObserver.this.onDataFetchFinished();
         }
 
         @Override
         public void onDataReceived(DataResult<Data> dataResult) {
-            DataSource.this.onDataReceived(dataResult);
+            DataObserver.this.onDataReceived(dataResult);
         }
 
         @Override
         public void onErrorReceived(ErrorInfo errorInfo) {
-            DataSource.this.onErrorReceived(errorInfo);
+            DataObserver.this.onErrorReceived(errorInfo);
         }
     };
 }

@@ -1,6 +1,6 @@
 package com.raizlabs.datacontroller;
 
-public class DCError extends java.lang.Error {
+public class DCError {
 
     public static class Types {
         public static final int UNDEFINED = 0;
@@ -11,19 +11,28 @@ public class DCError extends java.lang.Error {
 
     private int errorType;
     private Object tag;
+    private Throwable throwable;
 
     public DCError(String message, int errorType) {
         this(message, errorType, null);
     }
 
     public DCError(String message, int errorType, Object tag) {
-        super(message);
         this.errorType = errorType;
         this.tag = tag;
+        this.throwable = new Exception(message);
+    }
+
+    public String getMessage() {
+        return throwable.getMessage();
     }
 
     public int getErrorType() {
         return errorType;
+    }
+
+    public Throwable getThrowable() {
+        return throwable;
     }
 
     public Object getTag() {

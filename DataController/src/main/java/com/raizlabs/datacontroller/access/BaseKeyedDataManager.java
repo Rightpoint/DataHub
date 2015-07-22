@@ -8,7 +8,7 @@ public abstract class BaseKeyedDataManager<K, V> implements KeyedDataManager<K, 
     }
 
     @Override
-    public <T extends V> KeyedMemoryDataAccess<T> createDataAccess(K key, int sourceId) {
-        return new KeyedMemoryDataAccess<>(key, sourceId, this);
+    public <T extends V> KeyedMemoryDataAccess<T> createDataAccess(K key, int typeId) {
+        return new KeyedMemoryDataAccess<>(key, typeId, this);
     }
 }

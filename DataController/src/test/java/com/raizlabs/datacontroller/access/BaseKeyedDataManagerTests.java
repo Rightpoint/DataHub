@@ -29,11 +29,11 @@ public abstract class BaseKeyedDataManagerTests {
     @Test
     public void testAccessSetup() {
         final String key = "key";
-        final int sourceId = 50;
-        KeyedMemoryDataAccess<Object> access = getDataManager().createDataAccess(key, sourceId);
+        final int typeId = 50;
+        KeyedMemoryDataAccess<Object> access = getDataManager().createDataAccess(key, typeId);
 
         Assert.assertEquals(key, access.getKey());
-        Assert.assertEquals(sourceId, access.getSourceId());
+        Assert.assertEquals(typeId, access.getTypeId());
     }
 
     @Test

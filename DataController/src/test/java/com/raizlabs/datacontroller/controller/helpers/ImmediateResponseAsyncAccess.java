@@ -9,11 +9,11 @@ public class ImmediateResponseAsyncAccess<T> implements AsynchronousDataAccess<T
     private OneShotLock completionLock = new OneShotLock();
 
     private final DataAccessResult<T> result;
-    private final int sourceId;
+    private final int typeId;
 
-    public ImmediateResponseAsyncAccess(DataAccessResult<T> result, int sourceId) {
+    public ImmediateResponseAsyncAccess(DataAccessResult<T> result, int typeId) {
         this.result = result;
-        this.sourceId = sourceId;
+        this.typeId = typeId;
     }
 
     @Override
@@ -33,8 +33,8 @@ public class ImmediateResponseAsyncAccess<T> implements AsynchronousDataAccess<T
     }
 
     @Override
-    public int getSourceId() {
-        return sourceId;
+    public int getTypeId() {
+        return typeId;
     }
 
     public OneShotLock getCompletionLock() {

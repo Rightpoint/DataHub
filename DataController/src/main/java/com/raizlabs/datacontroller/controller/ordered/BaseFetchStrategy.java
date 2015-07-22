@@ -51,7 +51,7 @@ public abstract class BaseFetchStrategy<T> implements FetchStrategy<T>, ResultPr
     public synchronized void fetch() {
         // Fetch up to the last index
         final List<AsynchronousDataAccess<T>> accesses = dataController.getAsyncDataAccesses();
-        final int lastAccessId = accesses.get(accesses.size() - 1).getSourceId();
+        final int lastAccessId = accesses.get(accesses.size() - 1).getTypeId();
         fetch(lastAccessId);
     }
 
@@ -72,10 +72,10 @@ public abstract class BaseFetchStrategy<T> implements FetchStrategy<T>, ResultPr
         this.asyncDataAccesses = new ArrayList<>(getDataController().getAsyncDataAccesses());
         final SynchronousDataAccess<T> syncAccess = dataController.getSyncDataAccess();
 
-        if (syncAccess == null || syncAccess.getSourceId() != limitId) {
+        if (syncAccess == null || syncAccess.getTypeId() != limitId) {
             boolean limitIdFound = false;
             for (DataAccess access : this.asyncDataAccesses) {
-                if (access.getSourceId() == limitId) {
+                if (access.getTypeId() == limitId) {
                     limitIdFound = true;
                     break;
                 }

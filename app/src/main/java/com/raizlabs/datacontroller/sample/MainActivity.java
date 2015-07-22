@@ -16,8 +16,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
 
-import com.raizlabs.datacontroller.source.DataSource;
-import com.raizlabs.datacontroller.source.DataSourceListener;
+import com.raizlabs.datacontroller.observer.DataObserver;
+import com.raizlabs.datacontroller.observer.DataObserverListener;
 import com.raizlabs.datacontroller.ErrorInfo;
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.sample.data.RecyclerAdapter;
@@ -47,7 +47,7 @@ public class MainActivity extends Activity {
 
     private RecyclerAdapter<School, SchoolAdapter.ViewHolder> adapter;
 
-    private final DataSourceListener<List<School>> listener = new DataSourceListener<List<School>>() {
+    private final DataObserverListener<List<School>> listener = new DataObserverListener<List<School>>() {
         @Override
         public void onDataFetchStarted() {
             setProgressBarIndeterminateVisibility(true);
@@ -57,11 +57,11 @@ public class MainActivity extends Activity {
         public void onDataReceived(DataResult<List<School>> dataResult) {
             updateExpiryInfo(dataResult);
 
-            if(!dataResult.isUpdatePending()) {
+            if(!dataResult.isFetching()) {
                 setProgressBarIndeterminateVisibility(false);
             }
 
-            Toast.makeText(getApplicationContext(), "onDataReceived\nSource: " + (dataResult.getDataSourceId() == DataResult.MEMORY_DATA ? "MEMORY" : dataResult.getDataSourceId() == DataResult.DISK_DATA ? "DISK" : "WEB") + "\nIncoming? " + dataResult.isUpdatePending(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "onDataReceived\nSource: " + (dataResult.getAccessTypeId() == DataResult.MEMORY_DATA ? "MEMORY" : dataResult.getAccessTypeId() == DataResult.DISK_DATA ? "DISK" : "WEB") + "\nIncoming? " + dataResult.isFetching(), Toast.LENGTH_LONG).show();
 
             List<School> list = dataResult.getData();
             if(list == null || list.isEmpty()) {
@@ -77,14 +77,14 @@ public class MainActivity extends Activity {
         public void onErrorReceived(ErrorInfo errorInfo) {
             updateExpiryInfo(errorInfo);
 
-            if(!errorInfo.isUpdatePending()) {
+            if(!errorInfo.isFetching()) {
                 setProgressBarIndeterminateVisibility(false);
             }
-            Toast.makeText(getApplicationContext(), "onErrorReceived\nSource: " + (errorInfo.getDataSourceType() == DataResult.MEMORY_DATA ? "MEMORY" : errorInfo.getDataSourceType() == DataResult.DISK_DATA ? "DISK" : "WEB") + " \nIncoming? " + errorInfo.isUpdatePending() + "\nReason: " + errorInfo.getErrorMessage().toUpperCase(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "onErrorReceived\nSource: " + (errorInfo.getDataSourceType() == DataResult.MEMORY_DATA ? "MEMORY" : errorInfo.getDataSourceType() == DataResult.DISK_DATA ? "DISK" : "WEB") + " \nIncoming? " + errorInfo.isFetching() + "\nReason: " + errorInfo.getErrorMessage().toUpperCase(), Toast.LENGTH_LONG).show();
         }
     };
 
-    private DataSource<List<School>> source = new DataSource<>(SchoolDataController.getInstance());
+    private DataObserver<List<School>> source = new DataObserver<>(SchoolDataController.getInstance());
 
     private void setEmptyState(boolean isEmptyState) {
         viewFlipper.setDisplayedChild(isEmptyState ? viewFlipper.indexOfChild(emptyView) : viewFlipper.indexOfChild(recyclerView));

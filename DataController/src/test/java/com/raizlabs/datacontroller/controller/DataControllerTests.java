@@ -21,15 +21,15 @@ public class DataControllerTests {
         final Wrapper<Boolean> errorCalled = new Wrapper<>(false);
         final ExposedDataController<Object> controller = new ExposedDataController<Object>() {
             @Override
-            protected ControllerResult<Object> doGet() {
+            protected DataControllerResult<Object> doGet() {
                 getCalled.set(true);
-                return new ControllerResult<>(DataAccessResult.fromResult(null), 0, isFetching());
+                return new DataControllerResult<>(DataAccessResult.fromResult(null), 0, isFetching());
             }
 
             @Override
             protected void doFetch() {
                 fetchCalled.set(true);
-                processResult(new ControllerResult<>(DataAccessResult.fromResult(null), 0, false));
+                processResult(new DataControllerResult<>(DataAccessResult.fromResult(null), 0, false));
             }
 
             @Override
@@ -106,7 +106,7 @@ public class DataControllerTests {
         Assert.assertTrue(importCalled.get());
 
         DataAccessResult<Object> errorResult = DataAccessResult.fromError(new DCError("", DCError.Types.UNDEFINED));
-        controller.processResult(new ControllerResult<>(errorResult, 0, false));
+        controller.processResult(new DataControllerResult<>(errorResult, 0, false));
         Assert.assertTrue(errorCalled.get());
         Assert.assertTrue(listenerError.get());
 
@@ -116,8 +116,8 @@ public class DataControllerTests {
 
     private static abstract class ExposedDataController<T> extends DataController<T> {
         @Override
-        public void processResult(ControllerResult<T> controllerResult) {
-            super.processResult(controllerResult);
+        public void processResult(DataControllerResult<T> dataControllerResult) {
+            super.processResult(dataControllerResult);
         }
     }
 }
