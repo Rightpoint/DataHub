@@ -2,6 +2,7 @@ package com.raizlabs.datacontroller.observer;
 
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.ErrorInfo;
+import com.raizlabs.datacontroller.controller.DataControllerResult;
 
 public interface DataObserverListener<Data> {
 
@@ -16,13 +17,9 @@ public interface DataObserverListener<Data> {
     public void onDataFetchFinished();
 
     /**
-     * Called when data has been fetched.
-     * @param dataResult The fetched data.
+     * Called when a result has been received.
+     *
+     * @param result The received result.
      */
-    public void onDataReceived(DataResult<Data> dataResult);
-
-    /**
-     * Called when the data fetch has failed.
-     */
-    public void onErrorReceived(ErrorInfo errorInfo);
+    public void onResultReceived(DataControllerResult<Data> result);
 }

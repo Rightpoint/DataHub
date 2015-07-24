@@ -159,8 +159,8 @@ public class OrderedDataController<Data> extends DataController<Data> {
     }
 
     @Override
-    protected void onDataFetched(DataResult<Data> dataResult) {
-        super.onDataFetched(dataResult);
+    protected void onResultFetched(DataControllerResult<Data> dataResult) {
+        super.onResultFetched(dataResult);
 
         if (shouldBackport() && shouldBackportResult(dataResult)) {
             Data data = dataResult.getData();
@@ -179,8 +179,9 @@ public class OrderedDataController<Data> extends DataController<Data> {
         }
     }
 
-    protected boolean shouldBackportResult(DataResult<Data> dataResult) {
-        return (dataResult.getData() != null);
+
+    protected boolean shouldBackportResult(DataControllerResult<Data> dataResult) {
+        return (dataResult.getData() != null) && (dataResult.getError() == null);
     }
 
     protected void processResult(DataAccessResult<Data> data, DataAccess access) {

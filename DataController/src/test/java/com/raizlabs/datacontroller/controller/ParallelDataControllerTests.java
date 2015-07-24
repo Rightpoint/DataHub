@@ -64,13 +64,10 @@ public class ParallelDataControllerTests extends BaseOrderedDataControllerTests 
             }
 
             @Override
-            public void onDataReceived(DataResult<Object> dataResult) {
-                receivedData.set(dataResult.getData());
-            }
-
-            @Override
-            public void onErrorReceived(ErrorInfo errorInfo) {
-
+            public void onResultReceived(DataControllerResult<Object> result) {
+                if (result.hasData()) {
+                    receivedData.set(result.getData());
+                }
             }
         });
 
@@ -145,13 +142,10 @@ public class ParallelDataControllerTests extends BaseOrderedDataControllerTests 
             }
 
             @Override
-            public void onDataReceived(DataResult<Object> dataResult) {
-                receivedData.set(dataResult.getData());
-            }
-
-            @Override
-            public void onErrorReceived(ErrorInfo errorInfo) {
-
+            public void onResultReceived(DataControllerResult<Object> result) {
+                if (result.hasData()) {
+                    receivedData.set(result.getData());
+                }
             }
         });
 

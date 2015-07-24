@@ -1,7 +1,6 @@
 package com.raizlabs.datacontroller.controller;
 
 import com.raizlabs.datacontroller.DCError;
-import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.ErrorInfo;
 import com.raizlabs.datacontroller.access.AccessAssertions;
 import com.raizlabs.datacontroller.access.AsynchronousDataAccess;
@@ -138,14 +137,11 @@ public abstract class BaseOrderedDataControllerTests {
             }
 
             @Override
-            public void onDataReceived(DataResult<Object> dataResult) {
-                listenerReceivedCount.incrementAndGet();
-                listenerResult.set(dataResult.getData());
-            }
-
-            @Override
-            public void onErrorReceived(ErrorInfo errorInfo) {
-
+            public void onResultReceived(DataControllerResult<Object> result) {
+                if (!result.hasError()) {
+                    listenerReceivedCount.incrementAndGet();
+                    listenerResult.set(result.getData());
+                }
             }
         });
 
@@ -217,12 +213,7 @@ public abstract class BaseOrderedDataControllerTests {
             }
 
             @Override
-            public void onDataReceived(DataResult<Object> dataResult) {
-
-            }
-
-            @Override
-            public void onErrorReceived(ErrorInfo errorInfo) {
+            public void onResultReceived(DataControllerResult<Object> result) {
 
             }
         });
@@ -274,13 +265,10 @@ public abstract class BaseOrderedDataControllerTests {
             }
 
             @Override
-            public void onDataReceived(DataResult<Object> dataResult) {
-
-            }
-
-            @Override
-            public void onErrorReceived(ErrorInfo errorInfo) {
-                receivedError.set(errorInfo);
+            public void onResultReceived(DataControllerResult<Object> result) {
+                if (result.hasError()) {
+                    receivedError.set(result);
+                }
             }
         });
 

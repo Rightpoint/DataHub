@@ -19,11 +19,11 @@ public class DataAccessResult<Data> {
     private DCError error;
     private Data data;
 
-    private DataAccessResult(DCError error) {
+    protected DataAccessResult(DCError error) {
         this.error = error;
     }
 
-    private DataAccessResult(Data data) {
+    protected DataAccessResult(Data data) {
         this.data = data;
     }
 

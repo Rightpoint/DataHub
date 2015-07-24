@@ -21,14 +21,9 @@ public interface DataControllerListener<Data> {
     public void onDataFetchFinished();
 
     /**
-     * Called when the data has been fetched successfully.
+     * Called when a result has been received.
      *
-     * @param dataResult The fetched data.
+     * @param result The received result.
      */
-    public void onDataReceived(DataResult<Data> dataResult);
-
-    /**
-     * Called when the data fetch has failed.
-     */
-    public void onErrorReceived(ErrorInfo errorInfo);
+    public void onResultReceived(DataControllerResult<Data> result);
 }

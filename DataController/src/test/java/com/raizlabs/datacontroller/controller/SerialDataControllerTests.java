@@ -123,17 +123,14 @@ public class SerialDataControllerTests extends BaseOrderedDataControllerTests {
             }
 
             @Override
-            public void onDataReceived(DataResult<Object> dataResult) {
-                if (validValue.equals(dataResult.getData())) {
-                    receivedValid.set(true);
-                } else if (invalidValue.equals(dataResult.getData())) {
-                    receivedInvalid.set(true);
+            public void onResultReceived(DataControllerResult<Object> result) {
+                if (result.hasData()) {
+                    if (validValue.equals(result.getData())) {
+                        receivedValid.set(true);
+                    } else if (invalidValue.equals(result.getData())) {
+                        receivedInvalid.set(true);
+                    }
                 }
-            }
-
-            @Override
-            public void onErrorReceived(ErrorInfo errorInfo) {
-
             }
         });
 

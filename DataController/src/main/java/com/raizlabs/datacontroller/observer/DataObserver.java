@@ -2,8 +2,6 @@ package com.raizlabs.datacontroller.observer;
 
 import android.os.Handler;
 
-import com.raizlabs.datacontroller.DataResult;
-import com.raizlabs.datacontroller.ErrorInfo;
 import com.raizlabs.datacontroller.controller.DataController;
 import com.raizlabs.datacontroller.controller.DataControllerListener;
 import com.raizlabs.datacontroller.controller.DataControllerResult;
@@ -113,7 +111,7 @@ public class DataObserver<Data> {
     }
 
     /**
-     * Called to dispatch fetching start indication via the delegate.
+     * Called to dispatch fetching start indication via the listener.
      */
     protected void onDataFetchStarted() {
         dispatch(new Runnable() {
@@ -131,6 +129,9 @@ public class DataObserver<Data> {
         });
     }
 
+    /**
+     * Called to dispatch fetching finished indication via the listener.
+     */
     protected void onDataFetchFinished() {
         dispatch(new Runnable() {
             @Override
@@ -148,9 +149,9 @@ public class DataObserver<Data> {
     }
 
     /**
-     * Called to dispatch loading the data via the delegate.
+     * Called to dispatch results via the listener.
      */
-    protected void onDataReceived(final DataResult<Data> dataResult) {
+    protected void onResultReceived(final DataControllerResult<Data> dataResult) {
         dispatch(new Runnable() {
             @Override
             public void run() {
@@ -158,26 +159,7 @@ public class DataObserver<Data> {
                     listeners.map(new Delegate<DataObserverListener<Data>>() {
                         @Override
                         public void execute(DataObserverListener<Data> dataDataObserverListener) {
-                            dataDataObserverListener.onDataReceived(dataResult);
-                        }
-                    });
-                }
-            }
-        });
-    }
-
-    /**
-     * Called to dispatch showing an error via the delegate.
-     */
-    protected void onErrorReceived(final ErrorInfo errorInfo) {
-        dispatch(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (getStateLock()) {
-                    listeners.map(new Delegate<DataObserverListener<Data>>() {
-                        @Override
-                        public void execute(DataObserverListener<Data> dataDataObserverListener) {
-                            dataDataObserverListener.onErrorReceived(errorInfo);
+                            dataDataObserverListener.onResultReceived(dataResult);
                         }
                     });
                 }
@@ -199,12 +181,7 @@ public class DataObserver<Data> {
             if ((dataController != null) && dataController.isFetching()) {
                 listener.onDataFetchStarted();
 
-                DataControllerResult<Data> currentDataControllerResult = dataController.get();
-                if (currentDataControllerResult.getError() != null) {
-                    listener.onErrorReceived(currentDataControllerResult);
-                } else {
-                    listener.onDataReceived(currentDataControllerResult);
-                }
+                listener.onResultReceived(dataController.get());
             }
         }
     }
@@ -231,13 +208,8 @@ public class DataObserver<Data> {
         }
 
         @Override
-        public void onDataReceived(DataResult<Data> dataResult) {
-            DataObserver.this.onDataReceived(dataResult);
-        }
-
-        @Override
-        public void onErrorReceived(ErrorInfo errorInfo) {
-            DataObserver.this.onErrorReceived(errorInfo);
+        public void onResultReceived(DataControllerResult<Data> result) {
+            DataObserver.this.onResultReceived(result);
         }
     };
 }

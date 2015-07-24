@@ -5,6 +5,7 @@ import android.os.Handler;
 import com.raizlabs.datacontroller.DCError;
 import com.raizlabs.datacontroller.DataResult;
 import com.raizlabs.datacontroller.ErrorInfo;
+import com.raizlabs.datacontroller.access.DataAccessResult;
 import com.raizlabs.datacontroller.util.Delegate;
 import com.raizlabs.datacontroller.util.MappableSet;
 import com.raizlabs.datacontroller.util.ThreadingUtils;
@@ -149,11 +150,7 @@ public abstract class DataController<Data> {
             process(new Runnable() {
                 @Override
                 public void run() {
-                    if (dataControllerResult.getError() != null) {
-                        notifyError(dataControllerResult);
-                    } else {
-                        notifyDataFetched(dataControllerResult);
-                    }
+                    notifyResult(dataControllerResult);
 
                     if (!dataControllerResult.isFetching()) {
                         onFetchFinished();
@@ -163,24 +160,13 @@ public abstract class DataController<Data> {
         }
     }
 
-    private void notifyDataFetched(final DataResult<Data> dataResult) {
-        onDataFetched(dataResult);
+    private void notifyResult(final DataControllerResult<Data> result) {
+        onResultFetched(result);
 
         listeners.map(new Delegate<DataControllerListener<Data>>() {
             @Override
             public void execute(DataControllerListener<Data> listener) {
-                listener.onDataReceived(dataResult);
-            }
-        });
-    }
-
-    private void notifyError(final ErrorInfo errorInfo) {
-        onError(errorInfo);
-
-        listeners.map(new Delegate<DataControllerListener<Data>>() {
-            @Override
-            public void execute(DataControllerListener<Data> listener) {
-                listener.onErrorReceived(errorInfo);
+                listener.onResultReceived(result);
             }
         });
     }
@@ -191,7 +177,7 @@ public abstract class DataController<Data> {
             process(new Runnable() {
                 @Override
                 public void run() {
-                    notifyError(new ClosedErrorInfo(isFetching()));
+                    notifyResult(new ClosedErrorResult<Data>(isFetching()));
                 }
             });
         }
@@ -205,38 +191,17 @@ public abstract class DataController<Data> {
         }
     }
 
-    private static class ClosedErrorInfo implements ErrorInfo {
-        private boolean isFetching;
+    private static class ClosedErrorResult<T> extends DataControllerResult<T> {
 
-        public ClosedErrorInfo(boolean isFetching) {
-            this.isFetching = isFetching;
-
-        }
-
-        @Override
-        public DCError getError() {
-            return ERROR_CLOSED;
-        }
-
-        @Override
-        public int getAccessTypeId() {
-            return AccessTypeIds.NONE;
-        }
-
-        @Override
-        public boolean isFetching() {
-            return isFetching;
+        public ClosedErrorResult(boolean isFetching) {
+            super(new DataAccessResult<T>(ERROR_CLOSED){}, AccessTypeIds.NONE, isFetching);
         }
     }
 
     //endregion Methods
 
     //region Overridable Events
-    protected void onDataFetched(DataResult<Data> dataResult) {
-
-    }
-
-    protected void onError(ErrorInfo errorInfo) {
+    protected void onResultFetched(DataControllerResult<Data> result) {
 
     }
     //endregion Overridable Events

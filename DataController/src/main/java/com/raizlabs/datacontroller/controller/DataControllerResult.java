@@ -37,6 +37,10 @@ public class DataControllerResult<Data> implements DataResult<Data>, ErrorInfo {
         return accessResult.getError();
     }
 
+    public boolean hasError() {
+        return (getError() != null);
+    }
+
     public boolean hasData() {
         return accessResult.hasData();
     }

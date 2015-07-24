@@ -5,6 +5,7 @@ import com.raizlabs.datacontroller.ErrorInfo;
 import com.raizlabs.datacontroller.access.DataAccessResult;
 import com.raizlabs.datacontroller.access.TemporaryMemoryAccess;
 import com.raizlabs.datacontroller.controller.DataController;
+import com.raizlabs.datacontroller.controller.DataControllerResult;
 import com.raizlabs.datacontroller.controller.helpers.ImmediateResponseAsyncAccess;
 import com.raizlabs.datacontroller.controller.helpers.WaitForLockAsyncAccess;
 import com.raizlabs.datacontroller.controller.ordered.FetchStrategies;
@@ -33,8 +34,8 @@ public class DataObserverTests {
         final DataObserver<Object> observer = new DataObserver<>(controller, null);
 
         final Wrapper<Boolean> fetchStartedCalled = new Wrapper<>(false);
-        final Wrapper<Boolean> dataReceivedCalled = new Wrapper<>(false);
-        final Wrapper<Boolean> errorReceivedCalled = new Wrapper<>(false);
+        final Wrapper<Boolean> dataReceived = new Wrapper<>(false);
+        final Wrapper<Boolean> errorReceived = new Wrapper<>(false);
         final Wrapper<Boolean> fetchFinishedCalled = new Wrapper<>(false);
 
         final OneShotLock fetchFinishedLock = new OneShotLock();
@@ -52,28 +53,27 @@ public class DataObserverTests {
             }
 
             @Override
-            public void onDataReceived(DataResult<Object> dataResult) {
-                dataReceivedCalled.set(true);
-            }
-
-            @Override
-            public void onErrorReceived(ErrorInfo errorInfo) {
-                errorReceivedCalled.set(true);
+            public void onResultReceived(DataControllerResult<Object> result) {
+                if (result.hasError()) {
+                    errorReceived.set(true);
+                } else if (result.hasData()){
+                    dataReceived.set(true);
+                }
             }
         });
 
         Assert.assertFalse(fetchStartedCalled.get());
-        Assert.assertFalse(dataReceivedCalled.get());
+        Assert.assertFalse(dataReceived.get());
         Assert.assertFalse(fetchFinishedCalled.get());
-        Assert.assertFalse(errorReceivedCalled.get());
+        Assert.assertFalse(errorReceived.get());
 
         observer.fetch();
         fetchFinishedLock.waitUntilUnlocked();
 
         Assert.assertTrue(fetchStartedCalled.get());
-        Assert.assertTrue(dataReceivedCalled.get());
+        Assert.assertTrue(dataReceived.get());
         Assert.assertTrue(fetchFinishedCalled.get());
-        Assert.assertFalse(errorReceivedCalled.get());
+        Assert.assertFalse(errorReceived.get());
     }
 
     @Test
@@ -98,7 +98,7 @@ public class DataObserverTests {
         final DataObserver<Object> observer = new DataObserver<>(controller, null);
 
         final Wrapper<Boolean> fetchStartedCalled = new Wrapper<>(false);
-        final Wrapper<Boolean> dataReceivedCalled = new Wrapper<>(false);
+        final Wrapper<Boolean> dataReceived = new Wrapper<>(false);
 
         DataObserverListener<Object> listener = new DataObserverListener<Object>() {
             @Override
@@ -112,13 +112,10 @@ public class DataObserverTests {
             }
 
             @Override
-            public void onDataReceived(DataResult<Object> dataResult) {
-                dataReceivedCalled.set(true);
-            }
-
-            @Override
-            public void onErrorReceived(ErrorInfo errorInfo) {
-
+            public void onResultReceived(DataControllerResult<Object> result) {
+                if (result.hasData()) {
+                    dataReceived.set(true);
+                }
             }
         };
 
@@ -126,12 +123,12 @@ public class DataObserverTests {
         firstAccess.getCompletionLock().waitUntilUnlocked();
 
         Assert.assertFalse(fetchStartedCalled.get());
-        Assert.assertFalse(dataReceivedCalled.get());
+        Assert.assertFalse(dataReceived.get());
 
         observer.addListener(listener);
 
         Assert.assertTrue(fetchStartedCalled.get());
-        Assert.assertTrue(dataReceivedCalled.get());
+        Assert.assertTrue(dataReceived.get());
     }
 
     @Test
@@ -140,7 +137,7 @@ public class DataObserverTests {
         DataObserver<Object> dataObserver = new DataObserver<>(dataController, null);
 
         final Wrapper<Boolean> fetchStartedCalled = new Wrapper<>(false);
-        final Wrapper<Boolean> dataReceivedCalled = new Wrapper<>(false);
+        final Wrapper<Boolean> dataReceived = new Wrapper<>(false);
         final DataObserverListener<Object> listener = new DataObserverListener<Object>() {
             @Override
             public void onDataFetchStarted() {
@@ -153,13 +150,10 @@ public class DataObserverTests {
             }
 
             @Override
-            public void onDataReceived(DataResult<Object> dataResult) {
-                dataReceivedCalled.set(true);
-            }
-
-            @Override
-            public void onErrorReceived(ErrorInfo errorInfo) {
-
+            public void onResultReceived(DataControllerResult<Object> result) {
+                if (result.hasData()) {
+                    dataReceived.set(true);
+                }
             }
         };
 
@@ -174,12 +168,12 @@ public class DataObserverTests {
         dataObserver.addListener(listener);
 
         Assert.assertFalse(fetchStartedCalled.get());
-        Assert.assertFalse(dataReceivedCalled.get());
+        Assert.assertFalse(dataReceived.get());
 
         dataObserver.fetch();
 
         Assert.assertFalse(fetchStartedCalled.get());
-        Assert.assertFalse(dataReceivedCalled.get());
+        Assert.assertFalse(dataReceived.get());
 
 
         // Do a full close and make sure the controller closes

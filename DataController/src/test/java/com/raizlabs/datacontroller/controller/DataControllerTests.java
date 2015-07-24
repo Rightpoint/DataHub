@@ -14,22 +14,23 @@ public class DataControllerTests {
 
     @Test
     public void testEventMethods() {
+        final Object value = new Object();
         final Wrapper<Boolean> getCalled = new Wrapper<>(false);
-        final Wrapper<Boolean> fetchCalled = new Wrapper<>(false);
+        final Wrapper<Boolean> hadData = new Wrapper<>(false);
         final Wrapper<Boolean> importCalled = new Wrapper<>(false);
         final Wrapper<Boolean> closeCalled = new Wrapper<>(false);
-        final Wrapper<Boolean> errorCalled = new Wrapper<>(false);
+        final Wrapper<Boolean> hadError = new Wrapper<>(false);
         final ExposedDataController<Object> controller = new ExposedDataController<Object>() {
             @Override
             protected DataControllerResult<Object> doGet() {
                 getCalled.set(true);
-                return new DataControllerResult<>(DataAccessResult.fromResult(null), 0, isFetching());
+                return new DataControllerResult<>(DataAccessResult.fromResult(value), 0, isFetching());
             }
 
             @Override
             protected void doFetch() {
-                fetchCalled.set(true);
-                processResult(new DataControllerResult<>(DataAccessResult.fromResult(null), 0, false));
+                hadData.set(true);
+                processResult(new DataControllerResult<>(DataAccessResult.fromResult(value), 0, false));
             }
 
             @Override
@@ -54,22 +55,19 @@ public class DataControllerTests {
             }
 
             @Override
-            protected void onDataFetched(DataResult<Object> resultInfo) {
-                super.onDataFetched(resultInfo);
+            protected void onResultFetched(DataControllerResult<Object> result) {
+                super.onResultFetched(result);
 
-                fetchCalled.set(true);
-            }
-
-            @Override
-            protected void onError(ErrorInfo errorInfo) {
-                super.onError(errorInfo);
-
-                errorCalled.set(true);
+                if (result.hasError()) {
+                    hadError.set(true);
+                } else if (result.hasData()) {
+                    hadData.set(true);
+                }
             }
         };
 
         final Wrapper<Boolean> listenerFetchStarted = new Wrapper<>(false);
-        final Wrapper<Boolean> listenerReceived = new Wrapper<>(false);
+        final Wrapper<Boolean> listenerData = new Wrapper<>(false);
         final Wrapper<Boolean> listenerFetchFinished = new Wrapper<>(false);
         final Wrapper<Boolean> listenerError = new Wrapper<>(false);
         final DataControllerListener<Object> listener = new DataControllerListener<Object>() {
@@ -84,22 +82,23 @@ public class DataControllerTests {
             }
 
             @Override
-            public void onDataReceived(DataResult<Object> resultInfo) {
-                listenerReceived.set(true);
-            }
+            public void onResultReceived(DataControllerResult<Object> result) {
+                if (result.hasError()) {
+                    listenerError.set(true);
+                }
 
-            @Override
-            public void onErrorReceived(ErrorInfo errorInfo) {
-                listenerError.set(true);
+                if (result.hasData()) {
+                    listenerData.set(true);
+                }
             }
         };
 
         controller.addListener(listener);
 
         controller.fetch();
-        Assert.assertTrue(fetchCalled.get());
+        Assert.assertTrue(hadData.get());
         Assert.assertTrue(listenerFetchStarted.get());
-        Assert.assertTrue(listenerReceived.get());
+        Assert.assertTrue(listenerData.get());
         Assert.assertTrue(listenerFetchFinished.get());
 
         controller.importData(new Object());
@@ -107,7 +106,7 @@ public class DataControllerTests {
 
         DataAccessResult<Object> errorResult = DataAccessResult.fromError(new DCError("", DCError.Types.UNDEFINED));
         controller.processResult(new DataControllerResult<>(errorResult, 0, false));
-        Assert.assertTrue(errorCalled.get());
+        Assert.assertTrue(hadError.get());
         Assert.assertTrue(listenerError.get());
 
         controller.close();
