@@ -1,4 +1,4 @@
-package com.raizlabs.datacontroller;
+package com.raizlabs.datahub;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

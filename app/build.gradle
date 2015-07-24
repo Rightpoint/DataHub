@@ -6,7 +6,7 @@ android {
     buildToolsVersion "22.0.1"
 
     defaultConfig {
-        applicationId "com.raizlabs.datacontroller"
+        applicationId "com.raizlabs.datahub"
         minSdkVersion 15
         targetSdkVersion 22
         versionCode 1
@@ -23,7 +23,7 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:recyclerview-v7:22.1.1'
-    compile project(':DataController')
+    compile project(':DataHub')
     apt 'com.raizlabs.android:DBFlow-Compiler:2.0.0'
     compile 'com.raizlabs.android:DBFlow-Core:2.0.0'
     compile 'com.raizlabs.android:DBFlow:2.0.0'
