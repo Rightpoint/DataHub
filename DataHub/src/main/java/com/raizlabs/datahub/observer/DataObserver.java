@@ -74,6 +74,10 @@ public class DataObserver<Data> {
         }
     }
 
+    public void dispatchCurrent() {
+        onResultReceived(getCurrent());
+    }
+
     public void fetch() {
         if (dataHub != null) {
             dataHub.fetch();

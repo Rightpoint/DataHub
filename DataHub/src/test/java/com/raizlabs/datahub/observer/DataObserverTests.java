@@ -3,6 +3,7 @@ package com.raizlabs.datahub.observer;
 import com.raizlabs.datahub.DataResult;
 import com.raizlabs.datahub.ErrorInfo;
 import com.raizlabs.datahub.access.DataAccessResult;
+import com.raizlabs.datahub.access.SynchronousDataAccess;
 import com.raizlabs.datahub.access.TemporaryMemoryAccess;
 import com.raizlabs.datahub.hub.DataHub;
 import com.raizlabs.datahub.hub.DataHubResult;
@@ -186,6 +187,45 @@ public class DataObserverTests {
         Assert.assertNull(resultWrapper.get());
         dataHub.dispatchObject(new Object());
         Assert.assertNotNull(resultWrapper.get());
+    }
+
+    @Test
+    public void testDispatchCurrent() {
+        final Object value = new Object();
+        final SynchronousDataAccess<Object> access = new TemporaryMemoryAccess<>();
+        final DataHub<Object> hub = OrderedDataHub.Builder.newParallel()
+                .setSynchronousAccess(access)
+                .build();
+        final DataObserver<Object> observer = new DataObserver<>(hub, null);
+
+        final Wrapper<DataResult<Object>> resultWrapper = new Wrapper<>();
+        observer.addListener(new BaseDataObserverListener<Object>() {
+            @Override
+            public void onFetchStarted() {
+
+            }
+
+            @Override
+            public void onFetchFinished() {
+
+            }
+
+            @Override
+            public void onDataReceived(DataResult<Object> data) {
+                resultWrapper.set(data);
+            }
+
+            @Override
+            public void onErrorReceived(ErrorInfo error) {
+
+            }
+        });
+
+        access.importData(value);
+
+        resultWrapper.set(null);
+        observer.dispatchCurrent();
+        Assert.assertEquals(value, resultWrapper.get().getData());
     }
 
     @Test
