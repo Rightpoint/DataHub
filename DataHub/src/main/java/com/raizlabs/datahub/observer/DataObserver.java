@@ -9,11 +9,15 @@ import com.raizlabs.datahub.util.Delegate;
 import com.raizlabs.datahub.util.MappableSet;
 import com.raizlabs.datahub.util.ThreadingUtils;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class DataObserver<Data> {
 
     private DataHub<Data> dataHub;
 
     private MappableSet<DataObserverListener<Data>> listeners;
+    private List<ResultFilter<? super Data>> dispatchResultFilters;
 
     private Handler listenerHandler;
 
@@ -39,6 +43,7 @@ public class DataObserver<Data> {
         this.dataHub = dataHub;
         this.listenerHandler = listenerHandler;
         this.listeners = new MappableSet<>();
+        this.dispatchResultFilters = new LinkedList<>();
 
         this.dataHub.addListener(dataHubListener);
     }
@@ -106,6 +111,24 @@ public class DataObserver<Data> {
         }
     }
 
+    public void addDispatchResultFilter(ResultFilter<? super Data> filter) {
+        dispatchResultFilters.add(filter);
+    }
+
+    public void removeDispatchResultFilter(ResultFilter<? super Data> filter) {
+        dispatchResultFilters.remove(filter);
+    }
+
+    protected boolean shouldDispatchResult(DataHubResult<Data> result) {
+        for (ResultFilter<? super Data> filter : dispatchResultFilters) {
+            if (filter.shouldFilter(result)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     protected Object getStateLock() {
         return this;
     }
@@ -152,19 +175,21 @@ public class DataObserver<Data> {
      * Called to dispatch results via the listener.
      */
     protected void onResultReceived(final DataHubResult<Data> dataResult) {
-        dispatch(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (getStateLock()) {
-                    listeners.map(new Delegate<DataObserverListener<Data>>() {
-                        @Override
-                        public void execute(DataObserverListener<Data> dataDataObserverListener) {
-                            dataDataObserverListener.onResultReceived(dataResult);
-                        }
-                    });
+        if (shouldDispatchResult(dataResult)) {
+            dispatch(new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (getStateLock()) {
+                        listeners.map(new Delegate<DataObserverListener<Data>>() {
+                            @Override
+                            public void execute(DataObserverListener<Data> dataDataObserverListener) {
+                                dataDataObserverListener.onResultReceived(dataResult);
+                            }
+                        });
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     protected void initializeListener(final DataObserverListener<Data> listener) {

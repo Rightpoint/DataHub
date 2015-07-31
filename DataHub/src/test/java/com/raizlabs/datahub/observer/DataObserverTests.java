@@ -1,5 +1,7 @@
 package com.raizlabs.datahub.observer;
 
+import com.raizlabs.datahub.DataResult;
+import com.raizlabs.datahub.ErrorInfo;
 import com.raizlabs.datahub.access.DataAccessResult;
 import com.raizlabs.datahub.access.TemporaryMemoryAccess;
 import com.raizlabs.datahub.hub.DataHub;
@@ -130,6 +132,63 @@ public class DataObserverTests {
     }
 
     @Test
+    public void testFilter() {
+        final ManualHub<Object> dataHub = new ManualHub<>();
+        final DataObserver<Object> dataObserver = new DataObserver<>(dataHub, null);
+
+        final Wrapper<DataResult<Object>> resultWrapper = new Wrapper<>();
+
+        dataObserver.addListener(new BaseDataObserverListener<Object>() {
+            @Override
+            public void onFetchStarted() {
+
+            }
+
+            @Override
+            public void onFetchFinished() {
+
+            }
+
+            @Override
+            public void onDataReceived(DataResult<Object> data) {
+                resultWrapper.set(data);
+            }
+
+            @Override
+            public void onErrorReceived(ErrorInfo error) {
+
+            }
+        });
+
+        dataObserver.fetch();
+
+        dataHub.dispatchObject(null);
+        Assert.assertNull(resultWrapper.get().getData());
+
+        dataObserver.addDispatchResultFilter(ResultFilters.NULL_DATA);
+        resultWrapper.set(null);
+        dataHub.dispatchObject(null);
+        Assert.assertNull(resultWrapper.get());
+
+        final Object doNotPass = new Object();
+        dataHub.dispatchObject(doNotPass);
+        Assert.assertEquals(doNotPass, resultWrapper.get().getData());
+
+        dataObserver.addDispatchResultFilter(new ResultFilter<Object>() {
+            @Override
+            public boolean shouldFilter(DataHubResult<?> result) {
+                return doNotPass.equals(result.getData());
+            }
+        });
+
+        resultWrapper.set(null);
+        dataHub.dispatchObject(doNotPass);
+        Assert.assertNull(resultWrapper.get());
+        dataHub.dispatchObject(new Object());
+        Assert.assertNotNull(resultWrapper.get());
+    }
+
+    @Test
     public void testClose() {
         DataHub<Object> dataHub = OrderedDataHub.Builder.newParallel().build();
         DataObserver<Object> dataObserver = new DataObserver<>(dataHub, null);
@@ -179,6 +238,51 @@ public class DataObserverTests {
         dataObserver.close(true);
 
         Assert.assertTrue(dataHub.isClosed());
+    }
 
+    private static class ManualHub<T> extends DataHub<T> {
+
+        public void dispatchObject(T result) {
+            dispatchAccessResult(DataAccessResult.fromResult(result));
+        }
+
+        public void dispatchAccessResult(DataAccessResult<T> result) {
+            dispatchHubResult(new DataHubResult<>(result, 0, isFetching()));
+        }
+
+        public void dispatchHubResult(DataHubResult<T> result) {
+            processResult(result);
+        }
+
+        @Override
+        protected DataHubResult<T> doGet() {
+
+            return null;
+        }
+
+        @Override
+        protected void doFetch() {
+
+        }
+
+        @Override
+        protected void doFetch(int limitId) {
+
+        }
+
+        @Override
+        protected void doImportData(T t) {
+
+        }
+
+        @Override
+        protected void doClose() {
+
+        }
+
+        @Override
+        public boolean isFetching() {
+            return false;
+        }
     }
 }
