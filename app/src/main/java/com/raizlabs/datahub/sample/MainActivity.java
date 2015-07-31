@@ -16,10 +16,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
 
+import com.raizlabs.datahub.DataResult;
+import com.raizlabs.datahub.ErrorInfo;
 import com.raizlabs.datahub.observer.DataObserver;
 import com.raizlabs.datahub.observer.DataObserverListener;
-import com.raizlabs.datahub.ErrorInfo;
-import com.raizlabs.datahub.DataResult;
 import com.raizlabs.datahub.sample.data.RecyclerAdapter;
 import com.raizlabs.datahub.sample.data.school.School;
 import com.raizlabs.datahub.sample.data.school.SchoolAdapter;

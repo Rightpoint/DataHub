@@ -1,7 +1,7 @@
 package com.raizlabs.datahub.hub.helpers;
 
-import com.raizlabs.datahub.access.DataAccessResult;
 import com.raizlabs.datahub.access.AsynchronousDataAccess;
+import com.raizlabs.datahub.access.DataAccessResult;
 import com.raizlabs.datahub.utils.OneShotLock;
 
 public class WaitForLockAsyncAccess<T> implements AsynchronousDataAccess<T> {
