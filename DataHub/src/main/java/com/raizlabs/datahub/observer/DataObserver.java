@@ -35,7 +35,7 @@ public class DataObserver<Data> {
      * Constructs a {@link DataObserver} which accesses data from the given {@link DataHub} and dispatches all update callbacks
      * via the given {@link Handler}.
      *
-     * @param dataHub  The {@link DataHub} to access data from.
+     * @param dataHub         The {@link DataHub} to access data from.
      * @param listenerHandler The Handler to dispatch future callbacks to, or null to dispatch them straight from the
      *                        threads the {@link DataHub} is calling from.
      */
@@ -66,9 +66,9 @@ public class DataObserver<Data> {
         return listeners.remove(listener);
     }
 
-    public DataHubResult<Data> get() {
+    public DataHubResult<Data> getCurrent() {
         if (dataHub != null) {
-            return dataHub.get();
+            return dataHub.getCurrent();
         } else {
             return null;
         }
@@ -206,7 +206,7 @@ public class DataObserver<Data> {
             if ((dataHub != null) && dataHub.isFetching()) {
                 listener.onDataFetchStarted();
 
-                listener.onResultReceived(dataHub.get());
+                listener.onResultReceived(dataHub.getCurrent());
             }
         }
     }

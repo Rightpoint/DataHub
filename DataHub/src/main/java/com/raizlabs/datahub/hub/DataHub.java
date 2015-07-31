@@ -47,7 +47,7 @@ public abstract class DataHub<Data> {
     //endregion Abstract Methods
 
     //region Methods
-    public DataHubResult<Data> get() {
+    public DataHubResult<Data> getCurrent() {
         synchronized (getStateLock()) {
             if (isClosed()) {
                 processClosedError();

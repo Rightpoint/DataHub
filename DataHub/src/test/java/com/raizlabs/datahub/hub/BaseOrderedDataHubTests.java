@@ -63,18 +63,18 @@ public abstract class BaseOrderedDataHubTests {
                         .build();
 
         // Ensure there initially is no result
-        HubAssertions.assertDataUnavailable(dataHub.get());
+        HubAssertions.assertDataUnavailable(dataHub.getCurrent());
 
         // Import our value and make sure it comes back with the right value and the metadata of the access we created
         dataAccess.importData(value);
 
-        DataHubResult<Object> result = dataHub.get();
+        DataHubResult<Object> result = dataHub.getCurrent();
         Assert.assertEquals(typeId, result.getAccessTypeId());
         HubAssertions.assertDataEquals(value, result);
 
         // Ensure clearing functions properly
         dataAccess.clear();
-        HubAssertions.assertDataUnavailable(dataHub.get());
+        HubAssertions.assertDataUnavailable(dataHub.getCurrent());
     }
 
     @Test
@@ -90,12 +90,12 @@ public abstract class BaseOrderedDataHubTests {
                         .build();
 
         // Ensure there initially is no result
-        HubAssertions.assertDataUnavailable(dataHub.get());
+        HubAssertions.assertDataUnavailable(dataHub.getCurrent());
 
         // Import our value and make sure it comes back with the right value and the metadata of the access we created
         dataHub.importData(value);
 
-        DataHubResult<Object> result = dataHub.get();
+        DataHubResult<Object> result = dataHub.getCurrent();
         Assert.assertEquals(typeId, result.getAccessTypeId());
         HubAssertions.assertDataEquals(value, result);
     }
@@ -118,7 +118,7 @@ public abstract class BaseOrderedDataHubTests {
 
 
         // Ensure there initially is no result
-        HubAssertions.assertDataUnavailable(dataHub.get());
+        HubAssertions.assertDataUnavailable(dataHub.getCurrent());
 
         final AtomicInteger listenerReceivedCount = new AtomicInteger(0);
         final Wrapper<Boolean> listenerFinished = new Wrapper<>(false);
@@ -156,7 +156,7 @@ public abstract class BaseOrderedDataHubTests {
         Assert.assertEquals(2, listenerReceivedCount.get());
 
         Assert.assertEquals(value, listenerResult.get());
-        HubAssertions.assertDataEquals(value, dataHub.get());
+        HubAssertions.assertDataEquals(value, dataHub.getCurrent());
         // Ensure the data was backported
         AccessAssertions.assertDataEquals(value, dataAccess);
     }
