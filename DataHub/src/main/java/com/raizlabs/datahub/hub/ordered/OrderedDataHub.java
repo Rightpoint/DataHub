@@ -73,6 +73,10 @@ public class OrderedDataHub<Data> extends DataHub<Data> {
     private List<AsynchronousDataAccess<Data>> publicDataAccesses;
     private FetchStrategy<Data> fetchStrategy;
 
+    public OrderedDataHub(FetchStrategy<Data> strategy, SynchronousDataAccess<Data> synchronous, List<AsynchronousDataAccess<Data>> asynchronous) {
+        this(strategy, synchronous, asynchronous, true);
+    }
+
     public OrderedDataHub(FetchStrategy<Data> strategy, SynchronousDataAccess<Data> synchronous, List<AsynchronousDataAccess<Data>> asynchronous, boolean backport) {
         this.syncDataAccess = synchronous;
         this.fetchStrategy = strategy;
@@ -105,7 +109,7 @@ public class OrderedDataHub<Data> extends DataHub<Data> {
     }
 
     public List<AsynchronousDataAccess<Data>> getAsyncDataAccesses() {
-        return Collections.unmodifiableList(asyncDataAccesses);
+        return publicDataAccesses;
     }
 
     @Override
