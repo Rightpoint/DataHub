@@ -63,15 +63,15 @@ public abstract class BaseDataObserverListener<Data> implements DataObserverList
 
     }
 
-    protected DataHubResult<Data> getResult(int accessTypeId) {
+    public DataHubResult<Data> getResult(int accessTypeId) {
         return resultList.get(accessTypeId);
     }
 
-    protected DataHubResult<Data> getMostRecentResult() {
+    public DataHubResult<Data> getMostRecentResult() {
         return getResult(lastTypeId);
     }
 
-    protected DataHubResult<Data> getMostRecentDataResult() {
+    public DataHubResult<Data> getMostRecentDataResult() {
         return getResult(lastDataTypeId);
     }
 }

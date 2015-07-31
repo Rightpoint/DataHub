@@ -57,7 +57,7 @@ public class DataObserverTests {
             public void onResultReceived(DataHubResult<Object> result) {
                 if (result.hasError()) {
                     errorReceived.set(true);
-                } else if (result.hasData()){
+                } else if (result.hasData()) {
                     dataReceived.set(true);
                 }
             }
@@ -101,22 +101,15 @@ public class DataObserverTests {
         final Wrapper<Boolean> fetchStartedCalled = new Wrapper<>(false);
         final Wrapper<Boolean> dataReceived = new Wrapper<>(false);
 
-        DataObserverListener<Object> listener = new DataObserverListener<Object>() {
+        DataObserverListener<Object> listener = new SimpleDataObserverListener<Object>() {
             @Override
-            public void onDataFetchStarted() {
+            public void onFetchStarted() {
                 fetchStartedCalled.set(true);
             }
 
             @Override
-            public void onDataFetchFinished() {
-
-            }
-
-            @Override
-            public void onResultReceived(DataHubResult<Object> result) {
-                if (result.hasData()) {
-                    dataReceived.set(true);
-                }
+            public void onDataReceived(DataResult<Object> data) {
+                dataReceived.set(true);
             }
         };
 
@@ -139,25 +132,10 @@ public class DataObserverTests {
 
         final Wrapper<DataResult<Object>> resultWrapper = new Wrapper<>();
 
-        dataObserver.addListener(new BaseDataObserverListener<Object>() {
-            @Override
-            public void onFetchStarted() {
-
-            }
-
-            @Override
-            public void onFetchFinished() {
-
-            }
-
+        dataObserver.addListener(new SimpleDataObserverListener<Object>() {
             @Override
             public void onDataReceived(DataResult<Object> data) {
                 resultWrapper.set(data);
-            }
-
-            @Override
-            public void onErrorReceived(ErrorInfo error) {
-
             }
         });
 
@@ -199,25 +177,10 @@ public class DataObserverTests {
         final DataObserver<Object> observer = new DataObserver<>(hub, null);
 
         final Wrapper<DataResult<Object>> resultWrapper = new Wrapper<>();
-        observer.addListener(new BaseDataObserverListener<Object>() {
-            @Override
-            public void onFetchStarted() {
-
-            }
-
-            @Override
-            public void onFetchFinished() {
-
-            }
-
+        observer.addListener(new SimpleDataObserverListener<Object>() {
             @Override
             public void onDataReceived(DataResult<Object> data) {
                 resultWrapper.set(data);
-            }
-
-            @Override
-            public void onErrorReceived(ErrorInfo error) {
-
             }
         });
 
@@ -235,22 +198,15 @@ public class DataObserverTests {
 
         final Wrapper<Boolean> fetchStartedCalled = new Wrapper<>(false);
         final Wrapper<Boolean> dataReceived = new Wrapper<>(false);
-        final DataObserverListener<Object> listener = new DataObserverListener<Object>() {
+        final DataObserverListener<Object> listener = new SimpleDataObserverListener<Object>() {
             @Override
-            public void onDataFetchStarted() {
+            public void onFetchStarted() {
                 fetchStartedCalled.set(true);
             }
 
             @Override
-            public void onDataFetchFinished() {
-
-            }
-
-            @Override
-            public void onResultReceived(DataHubResult<Object> result) {
-                if (result.hasData()) {
-                    dataReceived.set(true);
-                }
+            public void onDataReceived(DataResult<Object> data) {
+                dataReceived.set(true);
             }
         };
 
