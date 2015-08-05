@@ -3,19 +3,31 @@ package com.raizlabs.datahub.access;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MemoryDataManager<K, V> extends BaseKeyedDataManager<K, V> {
+/**
+ * Implementation of a {@link KeyedDataManager} that keeps all key/value pairs in memory until they are removed.
+ *
+ * @param <K> {@inheritDoc}
+ * @param <V> {@inheritDoc}
+ */
+public class MemoryKeyedDataManager<K, V> extends BaseKeyedDataManager<K, V> {
 
     //region Statics
-    private static final MemoryDataManager GLOBAL_INSTANCE = new MemoryDataManager();
+    private static final MemoryKeyedDataManager<Object, Object> GLOBAL_INSTANCE = new MemoryKeyedDataManager<>();
 
-    public static MemoryDataManager getGlobalInstance() {
+    /**
+     * @return The shared global static instance of a general {@link MemoryKeyedDataManager}.
+     */
+    public static MemoryKeyedDataManager<Object, Object> getGlobalInstance() {
         return GLOBAL_INSTANCE;
     }
     //endregion Statics
 
     private Map<K, V> map = new HashMap<>();
 
-    public MemoryDataManager() {
+    /**
+     * Creates a new empty {@link MemoryKeyedDataManager}.
+     */
+    public MemoryKeyedDataManager() {
 
     }
 
@@ -42,8 +54,8 @@ public class MemoryDataManager<K, V> extends BaseKeyedDataManager<K, V> {
     }
 
     @Override
-    public void remove(K key) {
-        map.remove(key);
+    public V remove(K key) {
+        return map.remove(key);
     }
 
     @Override

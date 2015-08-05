@@ -1,10 +1,24 @@
 package com.raizlabs.datahub;
 
+/**
+ * A {@link DataResult} represents a result which specifically contains a piece of data.
+ *
+ * @param <Data>
+ */
 public interface DataResult<Data> {
 
-    public Data getData();
+    /**
+     * @return The data of the result.
+     */
+    Data getData();
 
-    public int getAccessTypeId();
+    /**
+     * @return The type ID of the access that was used to obtain this result.
+     */
+    int getAccessTypeId();
 
-    public boolean isFetching();
+    /**
+     * @return True if more data is still being fetched.
+     */
+    boolean isFetching();
 }

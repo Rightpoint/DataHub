@@ -1,17 +1,30 @@
 package com.raizlabs.datahub.access;
 
-import com.raizlabs.datahub.hub.DataHub;
-
-public class TemporaryMemoryAccess<Data> implements SynchronousDataAccess<Data> {
+/**
+ * A {@link SyncDataAccess} which simply keeps the value around in its own lifetime. Data can be imported and will be
+ * stored locally and returned until the value is changed, cleared, or this object itself is dereferenced and garbage
+ * collected.
+ *
+ * @param <Data> {@inheritDoc}
+ */
+public class TemporaryMemoryAccess<Data> implements SyncDataAccess<Data> {
 
     private Data value;
     private boolean imported = false;
     private final int typeId;
 
+    /**
+     * Creates a new {@link TemporaryMemoryAccess} which defaults to the {@link AccessTypeIds#MEMORY_DATA} type ID.
+     */
     public TemporaryMemoryAccess() {
-        this(DataHub.AccessTypeIds.MEMORY_DATA);
+        this(AccessTypeIds.MEMORY_DATA);
     }
 
+    /**
+     * Creates a new {@link TemporaryMemoryAccess} which returns the given type ID.
+     *
+     * @param typeId The type ID to return.
+     */
     public TemporaryMemoryAccess(int typeId) {
         this.typeId = typeId;
     }
@@ -41,6 +54,9 @@ public class TemporaryMemoryAccess<Data> implements SynchronousDataAccess<Data> 
         return typeId;
     }
 
+    /**
+     * Clears the value of this {@link TemporaryMemoryAccess}.
+     */
     public synchronized void clear() {
         value = null;
         imported = false;

@@ -1,9 +1,8 @@
 package com.raizlabs.datahub.observer;
 
 import com.raizlabs.datahub.DataResult;
-import com.raizlabs.datahub.ErrorInfo;
 import com.raizlabs.datahub.access.DataAccessResult;
-import com.raizlabs.datahub.access.SynchronousDataAccess;
+import com.raizlabs.datahub.access.SyncDataAccess;
 import com.raizlabs.datahub.access.TemporaryMemoryAccess;
 import com.raizlabs.datahub.hub.DataHub;
 import com.raizlabs.datahub.hub.DataHubResult;
@@ -26,7 +25,7 @@ public class DataObserverTests {
         final DataAccessResult<Object> secondResult = DataAccessResult.fromResult(new Object());
 
         final DataHub<Object> hub =
-                OrderedDataHub.Builder.newSerial(FetchStrategies.Serial.Validators.newValidOnly())
+                OrderedDataHub.Builder.newSerial(FetchStrategies.Serial.Finalizers.newAnyData())
                         .setSynchronousAccess(new TemporaryMemoryAccess<>())
                         .addAsynchronousAccess(new ImmediateResponseAsyncAccess<>(firstResult, 10))
                         .addAsynchronousAccess(new ImmediateResponseAsyncAccess<>(secondResult, 20))
@@ -170,7 +169,7 @@ public class DataObserverTests {
     @Test
     public void testDispatchCurrent() {
         final Object value = new Object();
-        final SynchronousDataAccess<Object> access = new TemporaryMemoryAccess<>();
+        final SyncDataAccess<Object> access = new TemporaryMemoryAccess<>();
         final DataHub<Object> hub = OrderedDataHub.Builder.newParallel()
                 .setSynchronousAccess(access)
                 .build();
@@ -247,11 +246,11 @@ public class DataObserverTests {
         }
 
         public void dispatchHubResult(DataHubResult<T> result) {
-            processResult(result);
+            onResult(result);
         }
 
         @Override
-        protected DataHubResult<T> doGet() {
+        protected DataHubResult<T> doGetCurrent() {
 
             return null;
         }

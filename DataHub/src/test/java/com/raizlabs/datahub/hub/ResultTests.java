@@ -1,6 +1,6 @@
 package com.raizlabs.datahub.hub;
 
-import com.raizlabs.datahub.DCError;
+import com.raizlabs.datahub.DataHubError;
 import com.raizlabs.datahub.access.DataAccessResult;
 
 import junit.framework.Assert;
@@ -35,7 +35,7 @@ public class ResultTests {
 
     @Test
     public void testError() {
-        final DCError error = new DCError("", DCError.Types.INVALID_STATE);
+        final DataHubError error = new DataHubError("", DataHubError.Types.INVALID_STATE);
         final DataHubResult<?> result = new DataHubResult<>(DataAccessResult.fromError(error), 0, false);
         HubAssertions.assertIsError(result);
     }

@@ -10,15 +10,15 @@ public class CachedDataManagerTests extends BaseKeyedDataManagerTests {
 
     private static final int SIZE = 5;
 
-    private static CachedDataManager<String, Object> dataManager;
+    private static CachedKeyedDataManager<String, Object> dataManager;
 
     @BeforeClass
     public static void setup() {
-        dataManager = new CachedDataManager<>(SIZE);
+        dataManager = new CachedKeyedDataManager<>(SIZE);
     }
 
     @Override
-    public CachedDataManager<String, Object> getDataManager() {
+    public CachedKeyedDataManager<String, Object> getDataManager() {
         return dataManager;
     }
 

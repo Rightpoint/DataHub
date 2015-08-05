@@ -1,12 +1,12 @@
 package com.raizlabs.datahub.hub;
 
-import com.raizlabs.datahub.DCError;
-import com.raizlabs.datahub.ErrorInfo;
+import com.raizlabs.datahub.DataHubError;
+import com.raizlabs.datahub.DataHubErrorInfo;
 import com.raizlabs.datahub.access.AccessAssertions;
-import com.raizlabs.datahub.access.AsynchronousDataAccess;
+import com.raizlabs.datahub.access.AsyncDataAccess;
 import com.raizlabs.datahub.access.DataAccessResult;
 import com.raizlabs.datahub.access.KeyedMemoryDataAccess;
-import com.raizlabs.datahub.access.MemoryDataManager;
+import com.raizlabs.datahub.access.MemoryKeyedDataManager;
 import com.raizlabs.datahub.hub.helpers.ImmediateResponseAsyncAccess;
 import com.raizlabs.datahub.hub.helpers.TrackedTemporaryMemoryAccess;
 import com.raizlabs.datahub.hub.helpers.WaitForLockAsyncAccess;
@@ -27,15 +27,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class BaseOrderedDataHubTests {
 
-    private static MemoryDataManager<String, Object> dataManager;
+    private static MemoryKeyedDataManager<String, Object> dataManager;
 
-    private static MemoryDataManager<String, Object> getDataManager() {
+    private static MemoryKeyedDataManager<String, Object> getDataManager() {
         return dataManager;
     }
 
     @BeforeClass
     public static void setup() {
-        dataManager = new MemoryDataManager<>();
+        dataManager = new MemoryKeyedDataManager<>();
     }
 
     @Before
@@ -56,7 +56,7 @@ public abstract class BaseOrderedDataHubTests {
         final String key = "test";
         final int typeId = 75;
         final Object value = new Object();
-        final KeyedMemoryDataAccess<Object> dataAccess = new KeyedMemoryDataAccess<>(key, typeId, getDataManager());
+        final KeyedMemoryDataAccess<Object> dataAccess = new KeyedMemoryDataAccess<>(key, getDataManager(), typeId);
         final DataHub<Object> dataHub =
                 createNewBuilder()
                         .setSynchronousAccess(dataAccess)
@@ -83,7 +83,7 @@ public abstract class BaseOrderedDataHubTests {
         final String key = "test";
         final int typeId = 75;
         final Object value = new Object();
-        final KeyedMemoryDataAccess<Object> dataAccess = new KeyedMemoryDataAccess<>(key, typeId, getDataManager());
+        final KeyedMemoryDataAccess<Object> dataAccess = new KeyedMemoryDataAccess<>(key, getDataManager(), typeId);
         final DataHub<Object> dataHub =
                 createNewBuilder()
                         .setSynchronousAccess(dataAccess)
@@ -104,10 +104,10 @@ public abstract class BaseOrderedDataHubTests {
     public void testSingleAsynchronous() {
         final String key = "test";
         final Object value = new Object();
-        final KeyedMemoryDataAccess<Object> dataAccess = new KeyedMemoryDataAccess<>(key, 55, getDataManager());
+        final KeyedMemoryDataAccess<Object> dataAccess = new KeyedMemoryDataAccess<>(key, getDataManager(), 55);
         final OneShotLock allowResult = new OneShotLock();
         final OneShotLock completed = new OneShotLock();
-        final AsynchronousDataAccess<Object> asyncDataAccess =
+        final AsyncDataAccess<Object> asyncDataAccess =
                 new WaitForLockAsyncAccess<>(DataAccessResult.fromResult(value), allowResult, 66);
 
         final DataHub<Object> dataHub =
@@ -170,7 +170,7 @@ public abstract class BaseOrderedDataHubTests {
             wasImported.add(new Wrapper<>(false));
         }
 
-        final AsynchronousDataAccess<Object> firstAccess = new ImmediateResponseAsyncAccess<Object>(DataAccessResult.fromUnavailable(), 99) {
+        final AsyncDataAccess<Object> firstAccess = new ImmediateResponseAsyncAccess<Object>(DataAccessResult.fromUnavailable(), 99) {
             @Override
             public void importData(Object o) {
                 super.importData(o);
@@ -178,7 +178,7 @@ public abstract class BaseOrderedDataHubTests {
             }
         };
 
-        final AsynchronousDataAccess<Object> secondAccess = new ImmediateResponseAsyncAccess<Object>(DataAccessResult.fromResult(value), 52) {
+        final AsyncDataAccess<Object> secondAccess = new ImmediateResponseAsyncAccess<Object>(DataAccessResult.fromResult(value), 52) {
             @Override
             public void importData(Object o) {
                 super.importData(o);
@@ -186,7 +186,7 @@ public abstract class BaseOrderedDataHubTests {
             }
         };
 
-        final AsynchronousDataAccess<Object> thirdAccess = new ImmediateResponseAsyncAccess<Object>(DataAccessResult.fromUnavailable(), 88) {
+        final AsyncDataAccess<Object> thirdAccess = new ImmediateResponseAsyncAccess<Object>(DataAccessResult.fromUnavailable(), 88) {
             @Override
             public void importData(Object o) {
                 super.importData(o);
@@ -251,7 +251,7 @@ public abstract class BaseOrderedDataHubTests {
                         .addAsynchronousAccess(thirdAccess)
                         .build();
 
-        final Wrapper<ErrorInfo> receivedError = new Wrapper<>();
+        final Wrapper<DataHubErrorInfo> receivedError = new Wrapper<>();
 
         dataHub.addListener(new DataHubListener<Object>() {
             @Override
@@ -330,6 +330,6 @@ public abstract class BaseOrderedDataHubTests {
         Assert.assertFalse(secondAccess.getCompletionLock().isUnlocked());
         Assert.assertFalse(thirdAccess.getCompletionLock().isUnlocked());
         Assert.assertNotNull(receivedError.get());
-        Assert.assertEquals(DCError.Types.DATA_ACCESS_NOT_FOUND, receivedError.get().getError().getErrorType());
+        Assert.assertEquals(DataHubError.Types.DATA_ACCESS_NOT_FOUND, receivedError.get().getError().getErrorType());
     }
 }

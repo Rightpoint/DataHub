@@ -12,6 +12,7 @@ import java.util.HashSet;
  * Note that this implementation makes liberal use of synchronization and extra
  * operations, so the performance will likely be worse than a standard
  * {@link HashSet}.
+ *
  * @param <T> The type of items in the {@link HashSet}
  */
 public class TransactionalHashSet<T> extends HashSet<T> {

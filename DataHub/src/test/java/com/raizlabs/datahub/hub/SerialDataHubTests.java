@@ -1,7 +1,7 @@
 package com.raizlabs.datahub.hub;
 
 import com.raizlabs.datahub.access.AccessAssertions;
-import com.raizlabs.datahub.access.AsynchronousDataAccess;
+import com.raizlabs.datahub.access.AsyncDataAccess;
 import com.raizlabs.datahub.access.DataAccess;
 import com.raizlabs.datahub.access.DataAccessResult;
 import com.raizlabs.datahub.access.TemporaryMemoryAccess;
@@ -18,7 +18,7 @@ public class SerialDataHubTests extends BaseOrderedDataHubTests {
 
     @Override
     protected OrderedDataHub.Builder<Object> createNewBuilder() {
-        return OrderedDataHub.Builder.newSerial(new FetchStrategies.Serial.DataValidator<Object>() {
+        return OrderedDataHub.Builder.newSerial(new FetchStrategies.Serial.DataFinalizer<Object>() {
             @Override
             public boolean isFinal(DataAccessResult<Object> result, DataAccess access) {
                 return false;
@@ -36,10 +36,10 @@ public class SerialDataHubTests extends BaseOrderedDataHubTests {
 
         final TemporaryMemoryAccess<Object> memoryAccess = new TemporaryMemoryAccess<>();
 
-        final AsynchronousDataAccess<Object> validAccess = new ImmediateResponseAsyncAccess<>(validResult, 5);
-        final AsynchronousDataAccess<Object> invalidAccess = new ImmediateResponseAsyncAccess<>(invalidResult, 6);
+        final AsyncDataAccess<Object> validAccess = new ImmediateResponseAsyncAccess<>(validResult, 5);
+        final AsyncDataAccess<Object> invalidAccess = new ImmediateResponseAsyncAccess<>(invalidResult, 6);
 
-        final FetchStrategies.Serial.DataValidator<Object> validator = new FetchStrategies.Serial.DataValidator<Object>() {
+        final FetchStrategies.Serial.DataFinalizer<Object> validator = new FetchStrategies.Serial.DataFinalizer<Object>() {
             @Override
             public boolean isFinal(DataAccessResult<Object> result, DataAccess access) {
                 return validValue.equals(result.getData());
@@ -89,10 +89,10 @@ public class SerialDataHubTests extends BaseOrderedDataHubTests {
 
         final TemporaryMemoryAccess<Object> memoryAccess = new TemporaryMemoryAccess<>();
 
-        final AsynchronousDataAccess<Object> validAccess = new ImmediateResponseAsyncAccess<>(validResult, 5);
-        final AsynchronousDataAccess<Object> invalidAccess = new ImmediateResponseAsyncAccess<>(invalidResult, 6);
+        final AsyncDataAccess<Object> validAccess = new ImmediateResponseAsyncAccess<>(validResult, 5);
+        final AsyncDataAccess<Object> invalidAccess = new ImmediateResponseAsyncAccess<>(invalidResult, 6);
 
-        final FetchStrategies.Serial.DataValidator<Object> validator = new FetchStrategies.Serial.DataValidator<Object>() {
+        final FetchStrategies.Serial.DataFinalizer<Object> validator = new FetchStrategies.Serial.DataFinalizer<Object>() {
             @Override
             public boolean isFinal(DataAccessResult<Object> result, DataAccess access) {
                 return validValue.equals(result.getData());

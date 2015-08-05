@@ -1,10 +1,10 @@
 package com.raizlabs.datahub.hub.helpers;
 
-import com.raizlabs.datahub.access.AsynchronousDataAccess;
+import com.raizlabs.datahub.access.AsyncDataAccess;
 import com.raizlabs.datahub.access.DataAccessResult;
 import com.raizlabs.datahub.utils.OneShotLock;
 
-public class WaitForLockAsyncAccess<T> implements AsynchronousDataAccess<T> {
+public class WaitForLockAsyncAccess<T> implements AsyncDataAccess<T> {
 
     private OneShotLock completionLock = new OneShotLock();
 
@@ -20,12 +20,12 @@ public class WaitForLockAsyncAccess<T> implements AsynchronousDataAccess<T> {
     }
 
     @Override
-    public void get(final Callback<T> callback) {
+    public void get(final AsyncDataCallback<T> asyncDataCallback) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 startLock.waitUntilUnlocked();
-                callback.onResult(result, WaitForLockAsyncAccess.this);
+                asyncDataCallback.onResult(result, WaitForLockAsyncAccess.this);
                 completionLock.unlock();
             }
         }).start();

@@ -1,6 +1,6 @@
 package com.raizlabs.datahub.hub;
 
-import com.raizlabs.datahub.DCError;
+import com.raizlabs.datahub.DataHubError;
 import com.raizlabs.datahub.access.DataAccessResult;
 import com.raizlabs.datahub.utils.Wrapper;
 
@@ -20,7 +20,7 @@ public class DataHubTests {
         final Wrapper<Boolean> hadError = new Wrapper<>(false);
         final ExposedDataHub<Object> hub = new ExposedDataHub<Object>() {
             @Override
-            protected DataHubResult<Object> doGet() {
+            protected DataHubResult<Object> doGetCurrent() {
                 getCalled.set(true);
                 return new DataHubResult<>(DataAccessResult.fromResult(value), 0, isFetching());
             }
@@ -28,7 +28,7 @@ public class DataHubTests {
             @Override
             protected void doFetch() {
                 hadData.set(true);
-                processResult(new DataHubResult<>(DataAccessResult.fromResult(value), 0, false));
+                onProcessResult(new DataHubResult<>(DataAccessResult.fromResult(value), 0, false));
             }
 
             @Override
@@ -102,8 +102,8 @@ public class DataHubTests {
         hub.importData(new Object());
         Assert.assertTrue(importCalled.get());
 
-        DataAccessResult<Object> errorResult = DataAccessResult.fromError(new DCError("", DCError.Types.UNDEFINED));
-        hub.processResult(new DataHubResult<>(errorResult, 0, false));
+        DataAccessResult<Object> errorResult = DataAccessResult.fromError(new DataHubError("", DataHubError.Types.UNDEFINED));
+        hub.onProcessResult(new DataHubResult<>(errorResult, 0, false));
         Assert.assertTrue(hadError.get());
         Assert.assertTrue(listenerError.get());
 
@@ -113,8 +113,8 @@ public class DataHubTests {
 
     private static abstract class ExposedDataHub<T> extends DataHub<T> {
         @Override
-        public void processResult(DataHubResult<T> dataHubResult) {
-            super.processResult(dataHubResult);
+        protected void onProcessResult(DataHubResult<T> dataHubResult) {
+            super.onProcessResult(dataHubResult);
         }
     }
 }

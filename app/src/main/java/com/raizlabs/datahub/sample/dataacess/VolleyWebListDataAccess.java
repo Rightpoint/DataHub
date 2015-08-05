@@ -4,7 +4,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
-import com.raizlabs.datahub.ErrorInfo;
+import com.raizlabs.datahub.DataHubErrorInfo;
 import com.raizlabs.datahub.access.m.BaseWebDataAccess;
 import com.raizlabs.datahub.access.m.WebDataAccessListener;
 import com.raizlabs.datahub.sample.data.JsonParser;
@@ -96,7 +96,7 @@ public abstract class VolleyWebListDataAccess<Data extends JsonParser> extends B
                         }
 
                         if(VolleyWebListDataAccess.this.listener != null) {
-                            VolleyWebListDataAccess.this.listener.onErrorReceived(new ErrorInfo(error.getMessage(), error.getCause() == null ? null : error.getCause().getMessage(), ErrorInfo.WEB_DATA, false));
+                            VolleyWebListDataAccess.this.listener.onErrorReceived(new DataHubErrorInfo(error.getMessage(), error.getCause() == null ? null : error.getCause().getMessage(), DataHubErrorInfo.WEB_DATA, false));
                         }
                     }
                 });

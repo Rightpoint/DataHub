@@ -1,10 +1,17 @@
 package com.raizlabs.datahub.observer;
 
+import com.raizlabs.datahub.DataHubErrorInfo;
 import com.raizlabs.datahub.DataResult;
-import com.raizlabs.datahub.ErrorInfo;
 import com.raizlabs.datahub.hub.DataHubResult;
 
-public class SimpleDataObserverListener<Data> extends BaseDataObserverListener<Data> {
+/**
+ * Class which greatly simplifies the implementation of {@link DataObserverListener}. Extends
+ * {@link BaseDataObserverListener} for some convenience methods for result history, as well as overriding all methods
+ * such that subclasses need only implement the ones they want.
+ *
+ * @param <Data> {@inheritDoc}
+ */
+public abstract class SimpleDataObserverListener<Data> extends BaseDataObserverListener<Data> {
 
     @Override
     public final void onDataFetchStarted() {
@@ -37,7 +44,7 @@ public class SimpleDataObserverListener<Data> extends BaseDataObserverListener<D
     }
 
     @Override
-    public void onErrorReceived(ErrorInfo error) {
+    public void onErrorReceived(DataHubErrorInfo error) {
 
     }
 }

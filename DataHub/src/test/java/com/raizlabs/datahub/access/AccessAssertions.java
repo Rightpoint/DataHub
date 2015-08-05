@@ -10,7 +10,7 @@ public class AccessAssertions {
         Assert.assertFalse(result.hasData());
     }
 
-    public static void assertDataUnavailable(SynchronousDataAccess<?> access) {
+    public static void assertDataUnavailable(SyncDataAccess<?> access) {
         assertDataUnavailable(access.get());
     }
 
@@ -20,7 +20,7 @@ public class AccessAssertions {
         Assert.assertTrue(result.hasData());
     }
 
-    public static void assertDataNotNull(SynchronousDataAccess<?> access) {
+    public static void assertDataNotNull(SyncDataAccess<?> access) {
         assertDataNotNull(access.get());
     }
 
@@ -30,7 +30,7 @@ public class AccessAssertions {
         Assert.assertTrue(result.hasData());
     }
 
-    public static void assertDataEquals(Object expectedData, SynchronousDataAccess<?> access) {
+    public static void assertDataEquals(Object expectedData, SyncDataAccess<?> access) {
         assertDataEquals(expectedData, access.get());
     }
 
@@ -40,7 +40,7 @@ public class AccessAssertions {
         Assert.assertFalse(result.hasData());
     }
 
-    public static void assertIsError(SynchronousDataAccess<?> access) {
+    public static void assertIsError(SyncDataAccess<?> access) {
         assertIsError(access.get());
     }
 }

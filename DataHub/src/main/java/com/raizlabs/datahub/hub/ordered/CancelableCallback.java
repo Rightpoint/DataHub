@@ -1,11 +1,18 @@
 package com.raizlabs.datahub.hub.ordered;
 
-import com.raizlabs.datahub.access.AsynchronousDataAccess;
+import com.raizlabs.datahub.access.AsyncDataAccess;
 import com.raizlabs.datahub.access.DataAccessResult;
 
 import java.lang.ref.WeakReference;
 
-public class CancelableCallback<T> implements AsynchronousDataAccess.Callback<T> {
+/**
+ * Class which acts as a {@link AsyncDataAccess.AsyncDataCallback} and forwards callbacks to a {@link ResultProcessor}.
+ * This class weakly references its {@link ResultProcessor} and may be cancelled via a call to {@link #cancel()}. If
+ * the weak reference dies or this callback has been cancelled, future results will be ignored.
+ *
+ * @param <T> {@inheritDoc}
+ */
+public class CancelableCallback<T> implements AsyncDataAccess.AsyncDataCallback<T> {
 
     private WeakReference<ResultProcessor<T>> processorReference;
 
@@ -13,7 +20,7 @@ public class CancelableCallback<T> implements AsynchronousDataAccess.Callback<T>
         this.processorReference = new WeakReference<>(processor);
     }
 
-    public void close() {
+    public void cancel() {
         this.processorReference = null;
     }
 
@@ -26,7 +33,7 @@ public class CancelableCallback<T> implements AsynchronousDataAccess.Callback<T>
     }
 
     @Override
-    public void onResult(DataAccessResult<T> result, AsynchronousDataAccess<T> access) {
+    public void onResult(DataAccessResult<T> result, AsyncDataAccess<T> access) {
         ResultProcessor<T> processor = getProcessor();
         if (processor != null) {
             processor.onResult(result, access);

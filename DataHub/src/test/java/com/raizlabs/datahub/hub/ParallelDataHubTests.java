@@ -1,9 +1,9 @@
 package com.raizlabs.datahub.hub;
 
 import com.raizlabs.datahub.access.AccessAssertions;
-import com.raizlabs.datahub.access.AsynchronousDataAccess;
+import com.raizlabs.datahub.access.AsyncDataAccess;
 import com.raizlabs.datahub.access.DataAccessResult;
-import com.raizlabs.datahub.access.SynchronousDataAccess;
+import com.raizlabs.datahub.access.SyncDataAccess;
 import com.raizlabs.datahub.access.TemporaryMemoryAccess;
 import com.raizlabs.datahub.hub.helpers.ImmediateResponseAsyncAccess;
 import com.raizlabs.datahub.hub.helpers.WaitForLockAsyncAccess;
@@ -37,10 +37,10 @@ public class ParallelDataHubTests extends BaseOrderedDataHubTests {
         final OneShotLock fetchFinishedLock = new OneShotLock();
         final Wrapper<Object> receivedData = new Wrapper<>();
 
-        final SynchronousDataAccess<Object> memoryAccess = new TemporaryMemoryAccess<>();
+        final SyncDataAccess<Object> memoryAccess = new TemporaryMemoryAccess<>();
         final WaitForLockAsyncAccess<Object> lateInvalidAccess =
                 new WaitForLockAsyncAccess<>(invalidResult, allowInvalidResponseLock, 88);
-        final AsynchronousDataAccess<Object> validAccess =
+        final AsyncDataAccess<Object> validAccess =
                 new ImmediateResponseAsyncAccess<>(validResult, 55);
 
         final DataHub<Object> dataHub =
@@ -112,10 +112,10 @@ public class ParallelDataHubTests extends BaseOrderedDataHubTests {
         final OneShotLock fetchFinishedLock = new OneShotLock();
         final Wrapper<Object> receivedData = new Wrapper<>();
 
-        final SynchronousDataAccess<Object> memoryAccess = new TemporaryMemoryAccess<>();
+        final SyncDataAccess<Object> memoryAccess = new TemporaryMemoryAccess<>();
         final WaitForLockAsyncAccess<Object> lateInvalidAccess =
                 new WaitForLockAsyncAccess<>(invalidResult, allowInvalidResponseLock, 88);
-        final AsynchronousDataAccess<Object> validAccess =
+        final AsyncDataAccess<Object> validAccess =
                 new ImmediateResponseAsyncAccess<>(validResult, 55);
         final WaitForLockAsyncAccess<Object> finalAccess =
                 new WaitForLockAsyncAccess<>(finalResult, allowFinalResponseLock, 77);

@@ -17,7 +17,7 @@ import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import com.raizlabs.datahub.DataResult;
-import com.raizlabs.datahub.ErrorInfo;
+import com.raizlabs.datahub.DataHubErrorInfo;
 import com.raizlabs.datahub.observer.DataObserver;
 import com.raizlabs.datahub.observer.DataObserverListener;
 import com.raizlabs.datahub.sample.data.RecyclerAdapter;
@@ -74,13 +74,13 @@ public class MainActivity extends Activity {
         }
 
         @Override
-        public void onErrorReceived(ErrorInfo errorInfo) {
-            updateExpiryInfo(errorInfo);
+        public void onErrorReceived(DataHubErrorInfo dataHubErrorInfo) {
+            updateExpiryInfo(dataHubErrorInfo);
 
-            if(!errorInfo.isFetching()) {
+            if(!dataHubErrorInfo.isFetching()) {
                 setProgressBarIndeterminateVisibility(false);
             }
-            Toast.makeText(getApplicationContext(), "onErrorReceived\nSource: " + (errorInfo.getDataSourceType() == DataResult.MEMORY_DATA ? "MEMORY" : errorInfo.getDataSourceType() == DataResult.DISK_DATA ? "DISK" : "WEB") + " \nIncoming? " + errorInfo.isFetching() + "\nReason: " + errorInfo.getErrorMessage().toUpperCase(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "onErrorReceived\nSource: " + (dataHubErrorInfo.getDataSourceType() == DataResult.MEMORY_DATA ? "MEMORY" : dataHubErrorInfo.getDataSourceType() == DataResult.DISK_DATA ? "DISK" : "WEB") + " \nIncoming? " + dataHubErrorInfo.isFetching() + "\nReason: " + dataHubErrorInfo.getErrorMessage().toUpperCase(), Toast.LENGTH_LONG).show();
         }
     };
 
