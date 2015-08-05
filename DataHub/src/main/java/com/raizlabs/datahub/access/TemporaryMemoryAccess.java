@@ -14,10 +14,10 @@ public class TemporaryMemoryAccess<Data> implements SyncDataAccess<Data> {
     private final int typeId;
 
     /**
-     * Creates a new {@link TemporaryMemoryAccess} which defaults to the {@link AccessTypeIds#MEMORY_DATA} type ID.
+     * Creates a new {@link TemporaryMemoryAccess} which defaults to the {@link DataAccess.AccessTypeIds#MEMORY_DATA} type ID.
      */
     public TemporaryMemoryAccess() {
-        this(AccessTypeIds.MEMORY_DATA);
+        this(DataAccess.AccessTypeIds.MEMORY_DATA);
     }
 
     /**
