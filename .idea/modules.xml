@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/DataHub.iml" filepath="$PROJECT_DIR$/DataHub.iml" />
       <module fileurl="file://$PROJECT_DIR$/DataHub/DataHub-DataHub.iml" filepath="$PROJECT_DIR$/DataHub/DataHub-DataHub.iml" />
+      <module fileurl="file://$PROJECT_DIR$/DataHub-WSMPlugin/DataHub-WSMPlugin.iml" filepath="$PROJECT_DIR$/DataHub-WSMPlugin/DataHub-WSMPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

@@ -1,1 +1,1 @@
-include ':app', ':DataHub'
+include ':app', ':DataHub', ':DataHub-WSMPlugin'
