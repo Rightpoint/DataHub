@@ -7,8 +7,6 @@ android {
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 22
-        versionCode VERSION_CODE.toInteger()
-        versionName VERSION_NAME
     }
     buildTypes {
         release {
