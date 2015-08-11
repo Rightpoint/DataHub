@@ -21,6 +21,7 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.raizlabs:WebServiceManager:1.0.0'
+    compile 'com.raizlabs:CoreUtils:1.1.1'
     compile project(':DataHub')
 }
 
