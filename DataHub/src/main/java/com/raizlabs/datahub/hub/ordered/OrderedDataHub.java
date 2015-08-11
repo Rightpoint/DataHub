@@ -173,22 +173,22 @@ public class OrderedDataHub<Data> extends DataHub<Data> {
      *                     {@link #setShouldBackport(boolean)}.
      */
     public OrderedDataHub(FetchStrategy<Data> strategy, SyncDataAccess<Data> synchronous, List<AsyncDataAccess<Data>> asynchronous, boolean backport) {
-        this.syncDataAccess = synchronous;
         this.fetchStrategy = strategy;
         this.fetchStrategy.setDataHubDelegate(fetchStrategyDelegate);
 
-        if (asynchronous == null) {
-            asynchronous = new ArrayList<>(0);
-        }
-        this.asyncDataAccesses = new LinkedList<>();
-        for (AsyncDataAccess<Data> access : asynchronous) {
-            if (access != null) {
-                this.asyncDataAccesses.add(access);
-            }
-        }
-        this.publicDataAccesses = Collections.unmodifiableList(this.asyncDataAccesses);
+        setSyncDataAccess(synchronous);
+        setAsyncDataAccesses(asynchronous);
 
         setShouldBackport(backport);
+    }
+
+    /**
+     * Constructs an {@link OrderedDataHub} with the given strategy. Won't be able to fetch anything until accesses are
+     * set manually.
+     * @param strategy The {@link FetchStrategy} to use for fetching and processing data.
+     */
+    protected OrderedDataHub(FetchStrategy<Data> strategy) {
+        this(strategy, null, null, true);
     }
 
     /**
@@ -214,15 +214,40 @@ public class OrderedDataHub<Data> extends DataHub<Data> {
     /**
      * @return The {@link SyncDataAccess} used for immediate data access.
      */
-    SyncDataAccess<Data> getSyncDataAccess() {
+    protected SyncDataAccess<Data> getSyncDataAccess() {
         return syncDataAccess;
+    }
+
+    /**
+     * Sets the {@link SyncDataAccess} to use for immediate data access.
+     * @param synchronous The {@link SyncDataAccess} to use.
+     */
+    protected void setSyncDataAccess(SyncDataAccess<Data> synchronous) {
+        this.syncDataAccess = synchronous;
     }
 
     /**
      * @return The list of {@link AsyncDataAccess} used for asynchronous access.
      */
-    List<AsyncDataAccess<Data>> getAsyncDataAccesses() {
+    protected List<AsyncDataAccess<Data>> getAsyncDataAccesses() {
         return publicDataAccesses;
+    }
+
+    /**
+     * Sets the list of {@link AsyncDataAccess} to use for asynchronous data access.
+     * @param asynchronous The list of {@link AsyncDataAccess} to use.
+     */
+    protected void setAsyncDataAccesses(List<AsyncDataAccess<Data>> asynchronous) {
+        if (asynchronous == null) {
+            asynchronous = new ArrayList<>(0);
+        }
+        this.asyncDataAccesses = new LinkedList<>();
+        for (AsyncDataAccess<Data> access : asynchronous) {
+            if (access != null) {
+                this.asyncDataAccesses.add(access);
+            }
+        }
+        this.publicDataAccesses = new ArrayList<>(this.asyncDataAccesses);
     }
 
     @Override
