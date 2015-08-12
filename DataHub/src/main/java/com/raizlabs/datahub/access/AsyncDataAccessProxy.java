@@ -2,7 +2,9 @@ package com.raizlabs.datahub.access;
 
 /**
  * {@link AsyncDataAccess} implementation which points to another {@link AsyncDataAccess}. The target access can
- * be changed, so this class can act as a pointer to another access, which can be changed.
+ * be changed, so this class can act as a pointer to another access, which can be changed. Because type IDs need to
+ * be consistent, and this class returns the type IDs of its target, all new targets should share the same type ID as
+ * the original.
  *
  * @param <Data> {@inheritDoc}
  */
@@ -54,9 +56,14 @@ public class AsyncDataAccessProxy<Data> implements AsyncDataAccess<Data> {
     }
 
     @Override
-    public void get(AsyncDataCallback<Data> asyncDataCallback) {
+    public void get(final AsyncDataCallback<Data> asyncDataCallback) {
         if (target != null) {
-            target.get(asyncDataCallback);
+            target.get(new AsyncDataCallback<Data>() {
+                @Override
+                public void onResult(DataAccessResult<Data> result, AsyncDataAccess<Data> access) {
+                    asyncDataCallback.onResult(result, AsyncDataAccessProxy.this);
+                }
+            });
         } else {
             asyncDataCallback.onResult(DataAccessResult.<Data>fromUnavailable(), this);
         }
