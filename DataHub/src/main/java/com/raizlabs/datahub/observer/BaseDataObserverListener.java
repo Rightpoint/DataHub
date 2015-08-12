@@ -50,6 +50,7 @@ public abstract class BaseDataObserverListener<Data> implements DataObserverList
 
     @Override
     public void onResultReceived(DataHubResult<Data> result) {
+        resultList.put(result.getAccessTypeId(), result);
         if (result.hasError()) {
             onErrorReceived(result);
         } else {
