@@ -275,7 +275,7 @@ public abstract class DataHub<Data> {
             }
         });
 
-        if (!dataHubResult.isFetching()) {
+        if (!isFetching()) {
             onFetchFinished();
         }
     }
