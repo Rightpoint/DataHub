@@ -305,7 +305,7 @@ public class DataObserver<Data> {
     protected void dispatchListenerLogic(Runnable runnable) {
         synchronized (getStateLock()) {
             if (listenerHandler != null) {
-                ThreadingUtils.runOnHandler(listenerHandler, runnable);
+                listenerHandler.post(runnable);
             } else {
                 runnable.run();
             }
