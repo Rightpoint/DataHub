@@ -37,9 +37,7 @@ public abstract class DataHub<Data> {
      * @return True if this {@link DataHub} is closed.
      */
     public boolean isClosed() {
-        synchronized (getStateLock()) {
-            return isClosed;
-        }
+        return isClosed;
     }
     //endregion Accessors
 
@@ -99,13 +97,11 @@ public abstract class DataHub<Data> {
      * @return The current immediate result.
      */
     public DataHubResult<Data> getCurrent() {
-        synchronized (getStateLock()) {
-            if (isClosed()) {
-                processClosedError();
-                return null;
-            } else {
-                return doGetCurrent();
-            }
+        if (isClosed()) {
+            processClosedError();
+            return null;
+        } else {
+            return doGetCurrent();
         }
     }
 
