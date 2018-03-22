@@ -1,5 +1,7 @@
 package com.raizlabs.datahub.hub.ordered;
 
+import android.util.Log;
+
 import com.raizlabs.datahub.DataHubError;
 import com.raizlabs.datahub.access.AsyncDataAccess;
 import com.raizlabs.datahub.access.DataAccess;
@@ -91,8 +93,12 @@ public abstract class BaseFetchStrategy<T> implements FetchStrategy<T>, ResultPr
     public synchronized void fetch() {
         // Fetch up to the last index
         final List<AsyncDataAccess<T>> accesses = dataHubDelegate.getAsyncAccesses();
-        final int lastAccessId = accesses.get(accesses.size() - 1).getTypeId();
-        fetch(lastAccessId);
+        int accessId = accesses.size() - 1;
+        if(accessId >= 0){
+            fetch(accesses.get(accessId).getTypeId());
+        } else {
+            Log.e(getClass().getCanonicalName(),"Invalid Access ID");
+        }
     }
 
     @Override
